@@ -4,7 +4,7 @@
 #define PRINT(s)     std::cout << (s)
 #define PRINTLN(s)   PRINT(s) << std::endl
 
-//#define TYPE_ERASURE
+#define TYPE_ERASURE
 
 #if defined TYPE_ERASURE  // heap class implementation uses type erasure for comparator 
 

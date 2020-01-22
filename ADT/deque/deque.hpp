@@ -1,7 +1,7 @@
 #ifndef DEQUE_H
 #define DEQUE_H
 
-#include "../../list/double_ended_doubly_linked_list.hpp"
+#include "../../linked list/double_ended_doubly_linked_list.hpp"
 
 template <typename T, template <typename> class DS = DoublyLinkedList>
 class Deque

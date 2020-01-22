@@ -12,9 +12,7 @@
 
 using std::size_t;
 
-class ElementNotPresentException : public std::exception
-{
-};
+class ElementNotPresentException : public std::exception {};
 
 /**** generic Hash function ****/
 template <typename T>
@@ -41,7 +39,8 @@ public:
     {
     friend class HashTable; // friend class HashTable<T>
     public:
-        Iterator(BucketArray *bucketArray, BucketArrayIterator bucketArrayIterator, BucketIterator bucketIterator);
+        Iterator(BucketArray *bucketArray, const BucketArrayIterator &bucketArrayIterator, const BucketIterator &bucketIterator);
+       
         T &operator*() { return *mBucketIterator; }
         T *operator->() { return &*mBucketIterator; }
         Iterator &operator++();
@@ -81,7 +80,7 @@ private:
 /**** HashTable's Iterator member definitions ****/
 
 template <typename T>
-HashTable<T>::Iterator::Iterator(BucketArray *bucketArray, BucketArrayIterator bucketArrayIterator, BucketIterator bucketIterator)
+HashTable<T>::Iterator::Iterator(BucketArray *bucketArray, const BucketArrayIterator &bucketArrayIterator, const BucketIterator &bucketIterator)
     : mBucketArray(bucketArray), mBucketArrayIterator(bucketArrayIterator), mBucketIterator(bucketIterator)
 {
 }

@@ -331,7 +331,35 @@ void Graph<T>::SingleSourceShortestPath(int startVertexIndex) const
 template <typename T>
 void Graph<T>::A_Star(int startVertexIndex, int endVertexIndex) const
 {
+    if (startVertexIndex < 0 || startVertexIndex >= mNumVertices || endVertexIndex < 0 || endVertexIndex >= mNumVertices)
+        throw IndexOutOfBoundsException();
+
+    if (Empty())
+        return;
+
+    for (int i = 0; i < mNumvertices; i++)
+    {
+        mVertices[i].distance = i == startVertexIndex ? 0 : INF;
+        mVertices[i].parentVertexIndex = -1;
+        mVertices[i].isVisited = false;
+        mVertices[i] = isInQueue = false;
+    }
+
+    auto comparator = [this](int a, int b) -> bool { return mVertices[a].distance + mVertices[a].heuristic < mVertices[b].distance + mVertices[b].heuristic; }; 
     
+    PriorityQueue<int, decltype(comparator)> priorityQueue(comparator);
+
+    priorityQueue.Insert(startVertexIndex);
+    mVertices[startVertexIndex].isInQueue = true;
+
+    while (!priorityQueue.Empty())
+    {
+        int currentVertexIndex = priorityQueue.Peek();
+        mVertices[currentVertexIndex].isVisited = true;
+        priorityQueue.Remove();
+
+        
+    }
 }
 
 #endif  // GRAPH_H

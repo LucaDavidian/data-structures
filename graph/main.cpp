@@ -104,11 +104,11 @@ int main(int argc, char **argv)
     Graph<std::string,5> graph5;
     //Graph<std::string> graph5;
 
-    graph5.AddVertex("A");
-    graph5.AddVertex("B");
-    graph5.AddVertex("C");
-    graph5.AddVertex("D");
-    graph5.AddVertex("E");
+    graph5.AddVertex("A", 10);
+    graph5.AddVertex("B", 5);
+    graph5.AddVertex("C", 4);
+    graph5.AddVertex("D", 4);
+    graph5.AddVertex("E", 0);
 
     graph5.AddEdge(0, 1, 50, true);
     graph5.AddEdge(0, 3, 80, true);
@@ -121,6 +121,10 @@ int main(int argc, char **argv)
 
     PRINTLN("Dijkstra's shortest path algorithm: ");
     graph5.SingleSourceShortestPath(0);
+    PRINTLN("");
+
+    PRINTLN("A* shortest path algorithm: ");
+    graph5.A_Star(0, 4);
     PRINTLN("");
 
     PRINTLN("Dijkstra's shortest path algorithm: ");

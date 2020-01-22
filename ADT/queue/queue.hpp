@@ -3,8 +3,8 @@
 
 #include <cstddef>
 
-#include "../../list/double_ended_singly_linked_list.hpp"
-#include "../../list/circularly_linked_list.hpp"
+#include "../../linked list/double_ended_singly_linked_list.hpp"
+#include "../../linked list/circularly_linked_list.hpp"
 
 using std::size_t;
 

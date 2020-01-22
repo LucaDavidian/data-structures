@@ -254,7 +254,7 @@ void Graph<T,N>::SingleSourceShortestPath(int startVertexIndex) const
 
         for (int i = 0; i < mNumVertices; i++)
         {
-            if (i == currentVertexIndex || mAdjacencyMatrix[currentVertexIndex][i] == INF)
+            if (i == currentVertexIndex || mVertices[i].isVisited || mAdjacencyMatrix[currentVertexIndex][i] == INF)
                 continue;
 
             int currentDistance = mVertices[i].distance;
@@ -332,19 +332,77 @@ void Graph<T,N>::A_Star(int startVertexIndex, int endVertexIndex) const
     if (startVertexIndex < 0 || startVertexIndex >= mNumVertices || endVertexIndex < 0 || endVertexIndex >= mNumVertices)
         throw IndexOutOfBoundsException();
 
-    if (Empty)
+    if (Empty())
         return;
 
     for (int i = 0; i < mNumVertices; i++)
     {
         mVertices[i].isVisited = false;
         mVertices[i].isInQueue = false;
+        mVertices[i].parentVertexIndex = -1;
         mVertices[i].distance = i == startVertexIndex ? 0 : INF;
     }
 
     PriorityQueue<int> priorityQueue([this](const int &v1, const int &v2) {return mVertices[v1].distance + mVertices[v1].heuristic < mVertices[v2].distance + mVertices[v2].heuristic; });
 
-        
+    priorityQueue.Insert(startVertexIndex);
+    mVertices[startVertexIndex].isInQueue = true;    
+
+    while (!priorityQueue.Empty())
+    {
+        int currentVertexIndex = priorityQueue.Peek();
+        mVertices[currentVertexIndex].isVisited = true;
+        priorityQueue.Remove();
+
+        if (currentVertexIndex == endVertexIndex)
+            break;
+
+        for (int i = 0; i < mNumVertices; i++)
+        {
+            if (i == currentVertexIndex || mVertices[i].isVisited || mAdjacencyMatrix[currentVertexIndex][i] == INF)
+                continue;
+
+            int currentDistance = mVertices[i].distance;
+            int newDistance = mVertices[currentVertexIndex].distance + mAdjacencyMatrix[currentVertexIndex][i];
+
+            if (newDistance < currentDistance)
+            {
+                mVertices[i].distance = newDistance;
+                mVertices[i].parentVertexIndex = currentVertexIndex;
+
+                if (!mVertices[i].isInQueue)
+                {
+                    priorityQueue.Insert(i);
+                    mVertices[i].isInQueue = true;
+                }
+            }
+        }
+    }
+
+    // display path
+    PRINT("Shortest path from "); 
+    PRINT(mVertices[startVertexIndex].data); 
+    PRINT(" to "); 
+    PRINT(mVertices[endVertexIndex].data);
+    PRINT(": ");
+
+    int path[N], i = 0;
+    path[i] = endVertexIndex;
+
+    while (path[i] != startVertexIndex)
+    {
+        path[i + 1] = mVertices[path[i]].parentVertexIndex;
+        i++;
+    }
+
+    while (i >= 0)
+        PRINT(mVertices[path[i--]].data);
+
+    PRINTLN(""); PRINTLN("");
+
+    // reset vertex flag     
+    for (int i = 0; i < mNumVertices; i++)
+        mVertices[i].isVisited = false;  
 }
 
 #endif  // GRAPH_H
