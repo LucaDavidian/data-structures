@@ -7,7 +7,7 @@
 
 using std::size_t;
 
-class OutOfBoundsException : public std::exception {};
+class IndexOutOfBoundsException : public std::exception {};
 
 template <typename T>
 class Vector;
@@ -23,7 +23,7 @@ class Vector
 {
 public:
     typedef T *Iterator;             // random access iterator
-    typedef const T *ConstIterator;  // implicit conversion from Iterator to ConstIterator
+    typedef const T *ConstIterator;  // implicit public conversion from Iterator to ConstIterator
 public:
     Vector() : mArray(nullptr), mCapacity(0), mNumElements(0) {}
     Vector(size_t size);
@@ -49,6 +49,11 @@ public:
     size_t Capacity() const { return mCapacity; }
     bool Empty() const { return mNumElements == 0; }
 
+    T *Data() { return const_cast<T*>(static_cast<const Vector&>(*this).Data()); }
+    const T *Data() const { return mArray; }
+
+    void Resize(size_t size) { Resize(size, T()); }
+    void Resize(size_t size, const T &element);
     void Reserve(size_t size);   // grow - TODO: shrink
     void Clear(); 
 
@@ -97,6 +102,30 @@ private:
     size_t mCapacity;
     size_t mNumElements;
 };
+
+template <typename T>
+typename Vector<T>::Iterator begin(Vector<T> &vector)
+{
+    return vector.Begin();
+}
+
+template <typename T>
+typename Vector<T>::Iterator end(Vector<T> &vector)
+{
+    return vector.End();
+}
+
+template <typename T>
+typename Vector<T>::ConstIterator cbegin(const Vector<T> &vector)
+{
+    return vector.CBegin();
+}
+
+template <typename T>
+typename Vector<T>::ConstIterator cend(const Vector<T> &vector)
+{
+    return vector.CEnd();
+}
 
 template <typename T>
 Vector<T>::Vector(size_t size)
@@ -188,6 +217,23 @@ void Vector<T>::Clear()
 
     mArray = nullptr;
     mCapacity = 0;
+}
+
+template <typename T>
+void Vector<T>::Resize(size_t size, const T &element)
+{
+    if (size == mNumElements)
+        return;
+    else if (size > mNumElements)
+    {
+        size_t diff = size - mNumElements;
+
+        while (diff--)
+            InsertLast(element);
+    }
+    else  // size < mNumElements
+        while (mNumElements > size)
+            RemoveLast();
 }
 
 template <typename T>
@@ -285,7 +331,7 @@ template <typename U>
 void Vector<T>::Insert(int index, U &&element)   
 {
     if (index < 0 || index > mNumElements)  
-        throw OutOfBoundsException();
+        throw IndexOutOfBoundsException();
 
     if (mNumElements >= mCapacity)
         Reserve(mCapacity == 0 ? 1 : mCapacity * 2);
@@ -315,10 +361,6 @@ typename Vector<T>::Iterator Vector<T>::Insert(Iterator iterator, U &&element)
     // size_t index = IndexOf(iterator);
     // Insert(index, std::forward<U>(element));
     // return AtIndex(index);
-    
-    // iterator must be valid
-    if (iterator < Begin() || iterator > End())
-        throw OutOfBoundsException();
 
     if (mNumElements >= mCapacity)   
     {
@@ -352,7 +394,7 @@ template <typename T>
 void Vector<T>::Remove(int index)
 {
     if (index < 0 || index >= mNumElements) 
-        throw OutOfBoundsException();
+        throw IndexOutOfBoundsException();
 
     // shift elements down one place
     for (size_t i = index; i < mNumElements - 1; i++)
@@ -367,10 +409,6 @@ void Vector<T>::Remove(int index)
 template <typename T>
 typename Vector<T>::Iterator Vector<T>::Remove(Iterator iterator)
 {
-    // iterator must refer to an element
-    if (iterator < Begin() || iterator >= End())
-        throw OutOfBoundsException();
-
     // shift elements down one place
     Iterator it;
     for (it = iterator; it < End() - 1; ++it)
@@ -387,9 +425,6 @@ typename Vector<T>::Iterator Vector<T>::Remove(Iterator iterator)
 template <typename T>
 typename Vector<T>::Iterator Vector<T>::Remove(Iterator begin, Iterator end)
 {
-    if (begin < Begin() || end > End() || begin > end)
-        throw OutOfBoundsException();
-
     Iterator it1 = begin;
 	Iterator it2 = end;
 

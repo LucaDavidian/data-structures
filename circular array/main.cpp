@@ -1,4 +1,5 @@
 #include "circular_array.hpp"
+#include "ring_buffer.hpp"
 #include <iostream>
 #include <string>
 
@@ -30,6 +31,32 @@ int main(int argc, char *argv[])
     catch (std::exception)
     {
         PRINT("exception caught"); 
+    }
+
+
+    RingBuffer<int, 5> rb;
+
+    PRINT("ring buffer size: "); PRINTLN(rb.Size());
+
+    rb.InsertLast(1);
+    rb.InsertLast(2);
+    rb.InsertLast(3);
+    rb.InsertLast(4);
+    rb.InsertFirst(0);
+
+    while (!rb.Empty())
+    {      
+        PRINTLN(rb.First());
+        rb.RemoveFirst();
+    }
+
+    try 
+    {
+        rb.RemoveLast();
+    }
+    catch (std::exception)
+    {
+        PRINT("empty: exception caught"); 
     }
 
     return 0;

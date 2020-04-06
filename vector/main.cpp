@@ -8,7 +8,7 @@
 class MyClass
 {
 public:
-    MyClass(int a, double b) : i(a), d(b) {}
+    MyClass(int a = 100, double b = 0.1) : i(a), d(b) {}
     int GetInt() const { return i; }
     double GetDouble() const { return d; } 
 private:
@@ -142,6 +142,26 @@ int main(int argc, char *argv[])
     vmc.Remove(vmc.AtIndex(1), vmc.End());  
 
     PrintSequence(vmc);
+
+    vmc.Resize(10);
+
+    PrintSequence(vmc);
+
+    vmc.Resize(1);
+
+    PrintSequence(vmc);
+
+    vmc.Resize(5);
+
+    for (int i = 0; i < 5; i++)
+        vmc.Data()[i] = MyClass(i, i * 2);
+
+    PrintSequence(vmc);
+
+    for (MyClass &mc : vmc)
+        std::cout << mc << std::endl;
+
+    std::cout << "done" << std::endl;
 
     return 0;
 }
