@@ -23,7 +23,7 @@ class Vector
 {
 public:
     typedef T *Iterator;             // random access iterator
-    typedef const T *ConstIterator;  // implicit public conversion from Iterator to ConstIterator
+    typedef const T *ConstIterator;  // implicit conversion from Iterator to ConstIterator
 public:
     Vector() : mArray(nullptr), mCapacity(0), mNumElements(0) {}
     Vector(size_t size);
