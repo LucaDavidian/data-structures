@@ -163,5 +163,12 @@ int main(int argc, char *argv[])
 
     std::cout << "done" << std::endl;
 
+    Vector<MyClass> myCV = { 1, 3, 4, 5 };
+
+    for (MyClass &mc : myCV)
+        std::cout << mc << std::endl;
+
+    std::cout << "done" << std::endl;
+
     return 0;
 }

@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <utility>
 #include <exception>
+#include <initializer_list>
 
 using std::size_t;
 
@@ -33,6 +34,7 @@ public:
     Vector(Vector &&other);
     template <typename U>
     Vector(Vector<U> &&other);
+    Vector(std::initializer_list<T> initList);    // sequence ctor
 
     ~Vector() { if (mArray) Clear(); }
 
@@ -201,6 +203,15 @@ Vector<T>::Vector(Vector<U> &&other)
 
     // set moved from array to null
     other.mArray = nullptr;
+}
+
+template <typename T>
+Vector<T>::Vector(std::initializer_list<T> initList) : mArray(nullptr), mCapacity(0), mNumElements(0)
+{
+    Reserve(initList.size());
+
+    for (auto &element : initList)
+        InsertLast(element);
 }
 
 template <typename T>
