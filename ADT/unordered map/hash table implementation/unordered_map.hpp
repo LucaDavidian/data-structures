@@ -1,10 +1,10 @@
-/**** map - hash table implementation (no duplicates) ****/
-
 #ifndef MAP_H
 #define MAP_H
 
+/**** map - hash table implementation (no duplicates) ****/
+
 #include "../../../vector/vector.hpp"
-#include "../../../list/double_ended_doubly_linked_list.hpp"
+#include "../../../linked list/double_ended_doubly_linked_list.hpp"
 #include "../../../../type erasure/type erasure - function/function.hpp"
 #include <utility>
 #include <exception>
@@ -161,7 +161,7 @@ typename Map<K,V>::Iterator Map<K,V>::Insert(FwdK &&key, FwdV &&value)
         size_t index = mHashFunction(key, mSize);
 
         BucketArrayIterator bucketArrayIterator = mBucketArray.Begin() + index;
-        BucketIterator bucketIterator = bucketArrayIterator->IT_InsertLast(Entry(std::forward<FwdK>(key), std::forward<FwdV>(value)));
+        BucketIterator bucketIterator = bucketArrayIterator->Insert(bucketArrayIterator->End(), Entry(std::forward<FwdK>(key), std::forward<FwdV>(value)));
 
         return Iterator(&mBucketArray, bucketArrayIterator, bucketIterator);
     }
@@ -187,7 +187,7 @@ typename Map<K,V>::Iterator Map<K,V>::Insert(E &&entry)
         size_t index = mHashFunction(entry.Key(), mSize);
 
         BucketArrayIterator bucketArrayIterator = mBucketArray.Begin() + index;
-        BucketIterator bucketIterator = bucketArrayIterator->IT_InsertLast(std::forward<E>(entry));
+        BucketIterator bucketIterator = bucketArrayIterator->Insert(bucketArrayIterator->End(), std::forward<E>(entry));
 
         return Iterator(&mBucketArray, bucketArrayIterator, bucketIterator);
     }
@@ -221,7 +221,7 @@ typename Map<K,V>::Iterator Map<K,V>::Remove(const K &key)
 template <typename K, typename V>
 typename Map<K,V>::Iterator Map<K,V>::Remove(const Iterator &iterator)
 {
-    BucketIterator bucketIterator = iterator.mBucketArrayIterator->IT_Remove(iterator.mBucketIterator);
+    BucketIterator bucketIterator = iterator.mBucketArrayIterator->Remove(iterator.mBucketIterator);
 
     mNumElements--;
 
@@ -251,7 +251,7 @@ template <typename K, typename V>
 typename Map<K,V>::Iterator Map<K,V>::Begin()
 {
     BucketArrayIterator bucketArrayIterator = mBucketArray.Begin();
-    BucketIterator bucketIterator(nullptr, nullptr);
+    BucketIterator bucketIterator = (mBucketArray.End() - 1)->End();
 
     while (bucketArrayIterator != mBucketArray.End())
     {
@@ -270,7 +270,8 @@ typename Map<K,V>::Iterator Map<K,V>::Begin()
 template <typename K, typename V>
 typename Map<K,V>::Iterator Map<K,V>::End()
 {
-    return Iterator(&mBucketArray, mBucketArray.End(), BucketIterator(nullptr, nullptr));
+    BucketIterator last = (mBucketArray.End() - 1)->End();
+    return Iterator(&mBucketArray, mBucketArray.End(), last);
 }
 
 #endif  // MAP_H
