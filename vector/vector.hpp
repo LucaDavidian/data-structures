@@ -156,7 +156,7 @@ Vector<T>::Vector(const Vector &other)
         new(&static_cast<T*>(rawMemory)[i]) T(other.mArray[i]);
 
     // set array, capacity and element count
-    mArray = static_cast<T*>(other.mArray);
+    mArray = static_cast<T*>(rawMemory);
     mCapacity = other.mCapacity;
     mNumElements = other.mNumElements;
 }
