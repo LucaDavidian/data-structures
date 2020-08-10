@@ -105,6 +105,7 @@ private:
     size_t mNumElements;
 };
 
+// begin and end functions (to use in range-for loop)
 template <typename T>
 typename Vector<T>::Iterator begin(Vector<T> &vector)
 {
@@ -113,6 +114,18 @@ typename Vector<T>::Iterator begin(Vector<T> &vector)
 
 template <typename T>
 typename Vector<T>::Iterator end(Vector<T> &vector)
+{
+    return vector.End();
+}
+
+template <typename T>
+typename Vector<T>::ConstIterator begin(const Vector<T> &vector)
+{
+    return vector.Begin();
+}
+
+template <typename T>
+typename Vector<T>::ConstIterator end(const Vector<T> &vector)
 {
     return vector.End();
 }

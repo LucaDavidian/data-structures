@@ -170,5 +170,10 @@ int main(int argc, char *argv[])
 
     std::cout << "done" << std::endl;
 
+    const Vector<int> vint = {1, 3, 4, 6, 72, 442};
+
+    for (int i : vint)
+        std::cout << i << std::endl;
+
     return 0;
 }
