@@ -54,8 +54,7 @@ public:
     T *Data() { return const_cast<T*>(static_cast<const Vector&>(*this).Data()); }
     const T *Data() const { return mArray; }
 
-    void Resize(size_t size) { Resize(size, T()); }
-    void Resize(size_t size, const T &element);
+    void Resize(size_t size, const T &element = T());
     void Reserve(size_t size);   // grow - TODO: shrink
     void Clear(); 
 

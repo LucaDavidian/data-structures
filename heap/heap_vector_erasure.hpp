@@ -5,7 +5,7 @@
 #include <exception>
 #include <utility>
 #include <new>
-#include "../../type erasure/type erasure - function/function.hpp"
+#include "../../function/function.hpp"
 
 using std::size_t;
 
@@ -17,7 +17,7 @@ bool Less(const T &a, const T &b)
     return a < b;
 }
 
-/**** heap class vector implementation (using type erasure for comparator function) ****/
+/**** binary heap class vector implementation (using type erasure for comparator function) ****/
 template <typename T>
 class Heap
 {

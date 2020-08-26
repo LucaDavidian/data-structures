@@ -3,7 +3,7 @@
 
 #ifdef TYPE_ERASURE_HEAP_QUEUE   // heap implementation (type erased comparator)
 
-    #include "../../../type erasure/type erasure - function/function.hpp"
+    #include "../../../function/function.hpp"
     #include "../../heap/heap_vector_erasure.hpp"
 
     template <typename T>
@@ -53,7 +53,7 @@
 #elif defined TYPE_ERASURE_VECTOR_QUEUE   // sorted vector implementation (type erased comparator)
 
     #include "../../vector/vector.hpp"
-    #include "../../../type erasure/type erasure - function/function.hpp"
+    #include "../../../function/function.hpp"
 
     template <typename T>
     class PriorityQueue

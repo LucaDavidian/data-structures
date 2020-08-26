@@ -16,7 +16,7 @@ bool Less(const T &a, const T &b)
     return a < b;
 }
 
-/**** heap class vector implementation (using an additional template type parameter for comparator function object) ****/
+/**** binary heap class vector implementation (using an additional template type parameter for comparator function object) ****/
 template <typename T, typename F = decltype(&Less<T>)>
 class Heap
 {

@@ -2,7 +2,7 @@
 #define SORTED_LIST_H
 
 #include "../../vector/vector.hpp"
-#include "../../../type erasure/type erasure - function/function.hpp"
+#include "../../../function/function.hpp"
 #include <utility>
 
 template <typename T>

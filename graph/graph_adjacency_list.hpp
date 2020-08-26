@@ -1,365 +1,369 @@
-#ifndef GRAPH_H
-#define GRAPH_H
-
 #include "../vector/vector.hpp"
-#include "../list/singly_linked_list.hpp"
-#include <iostream>
-#include <exception>
 #include <limits>
 
-#define PRINT(s)      std::cout << (s)
-#define PRINTLN(s)    PRINT(s) << std::endl;  
-
-class IndexOutOfBoundsException : public std::exception {};
-
-const int INF = std::numeric_limits<int>::max();
-
-/***** Graph - adjacency list representation ****/
-template <typename T> 
+template <typename T>
 class Graph
 {
-private:
-    struct Vertex
+public:
+    struct Node   
     {
         T data;
-        bool isVisited;
-        bool isInQueue;
-        int distance;
-        int parentVertexIndex;
+        mutable bool visited = false;
+        mutable float distance;
+        mutable int parentNodeIndex;
+        mutable int parentEdgeIndex;
+        mutable float heuristic;
     };
-    struct AdjacencyData
+    struct Edge  
     {
-        int vertexIndex;
-        int edgeWeight;
+        unsigned int nodeIndex1;    // reference to the first (source) node
+        unsigned int nodeIndex2;    // reference to the second (destination) node
+        float weight;
     };
 public:
-    bool Empty() const { return mVertices.Empty(); }
+    void AddNode(const T &data);
+    void AddEdge(unsigned int nodeIndex1, unsigned int nodeIndex2, float weight = 1.0f, bool directed = false);
 
-    template <typename U>
-    void AddVertex(U &&data);
-    void AddEdge(int startVertexIndex, int endVertexIndex, int weight = 1, bool directed = false);
+    int GetUnvisitedAdjacentNodeIndex(unsigned int nodeIndex) const;
 
-    typename SinglyLinkedList<AdjacencyData>::Iterator GetUnvisitedAdjacentVertex(int vertexIndex) const;
+    template <typename F>
+    void BreadthFirstSearch(unsigned int startNodeIndex, const F&f);
+    template <typename F>
+    void DepthFirstSearch(unsigned int startNodeIndex, const F&f);
+    template <typename F>
+    void DepthFirstSearchRecursive(unsigned int nodeIndex, const F&f);
 
-    void DepthFirstSearch(int startVertexIndex) const;
-    void DepthFirstSearchRecursive(int vertexIndex) const;
-    void BreadthFirstSearch(int startVertexIndex) const;
-
-    bool IsConnected(int startVertexIndex, int endVertexIndex) const;
-    
-    void SingleSourceShortestPath(int startVertexIndex) const;
-    void A_Star(int startVertexIndex, int endVertexIndex) const;
+    Vector<Vector<const Node*>> DijkstraShortestPath(unsigned int startNodeIndex) const; 
+    Vector<const Node*> DijkstraShortestPath(unsigned int startNodeIndex, unsigned int endNodeIndex) const; 
+    Vector<const Node*> AStar(unsigned int startNodeIndex, unsigned int endNodeIndex) const;
 private:
-    mutable Vector<Vertex> mVertices;
-    Vector<SinglyLinkedList<AdjacencyData>> mAdjacencyList;
+    static const float INF;
+    Vector<Node> mNodes;                           // ordered list of nodes
+    Vector<Edge> mEdges;                           // ordered list of edges
+    Vector<Vector<unsigned int>> mAdjacencyList;   // ordered list of lists of references (indices) to edges in the edge list
 
-    void CalculateTransitiveClosure();
+    void GetHeuristic(unsigned int nodeIndex, unsigned int startNodeIndex) const;
 };
 
-template <typename T>
-template <typename U>
-void Graph<T>::AddVertex(U &&data)
+template <typename T>   // euclidean distance (underestimating)
+void Graph<T>::GetHeuristic(unsigned int nodeIndex, unsigned int startNodeIndex) const
 {
-    mVertices.InsertLast(Vertex{std::forward<U>(data), false});
-    
-    mAdjacencyList.InsertLast(SinglyLinkedList<AdjacencyData>());
+    T diff = mNodes[nodeIndex].data - mNodes[startNodeIndex].data;
+    mNodes[nodeIndex].heuristic = diff.Length();
 }
 
 template <typename T>
-void Graph<T>::AddEdge(int startVertexIndex, int endVertexIndex, int weight, bool directed)
-{
-    mAdjacencyList[startVertexIndex].InsertFirst(AdjacencyData{endVertexIndex, weight});
+const float Graph<T>::INF = std::numeric_limits<float>::max();
 
-    if (!directed)
-        mAdjacencyList[endVertexIndex].InsertFirst(AdjacencyData{startVertexIndex, weight});
+template <typename T>
+void Graph<T>::AddNode(const T &data)
+{
+    mNodes.InsertLast(Node{data});
+    mAdjacencyList.InsertLast(Vector<unsigned int>());  // to each node corresponds a list of incident edges
 }
 
 template <typename T>
-typename SinglyLinkedList<typename Graph<T>::AdjacencyData>::Iterator Graph<T>::GetUnvisitedAdjacentVertex(int vertexIndex) const 
+void Graph<T>::AddEdge(unsigned int nodeIndex1, unsigned int nodeIndex2, float weight, bool directed)
 {
-    typename SinglyLinkedList<AdjacencyData>::Iterator it = mAdjacencyList[vertexIndex].Begin();
+    mEdges.InsertLast(Edge{nodeIndex1, nodeIndex2, weight}); // insert edge in list
+    mAdjacencyList[nodeIndex1].InsertLast(mEdges.Size() - 1);   // insert reference to edge in adjacency list
 
-    while (it != mAdjacencyList[vertexIndex].End())
+    if (!directed)   // if edge is undirected add another edge in opposite direction
     {
-        if (!mVertices[it->vertexIndex].isVisited && it->edgeWeight != INF)
-            return it;
-
-        ++it;
+        mEdges.InsertLast(Edge{nodeIndex2, nodeIndex1, weight});
+        mAdjacencyList[nodeIndex2].InsertLast(mEdges.Size() - 1);  
     }
-
-    return it;
-}
-
-#include "../ADT/stack/stack.hpp"
-
-template <typename T>
-void Graph<T>::DepthFirstSearch(int startVertexIndex) const
-{
-    if (startVertexIndex < 0 || startVertexIndex >= mVertices.Size())
-        throw IndexOutOfBoundsException();
-
-    if (Empty())
-        return;
-
-    Stack<int> stack;
-
-    PRINT("depth first search: ");
-
-    PRINT(mVertices[startVertexIndex].data);       // 1. visit vertex
-    mVertices[startVertexIndex].isVisited = true;  // 2. mark vertex as visited
-    stack.Push(startVertexIndex);                  // 3. push vertex onto stack
-
-    while (!stack.Empty())
-    {
-        int currentVertexIndex = stack.Top();
-
-        typename SinglyLinkedList<AdjacencyData>::Iterator unvisitedAdjacentVertex = GetUnvisitedAdjacentVertex(currentVertexIndex);
-
-        if (unvisitedAdjacentVertex != mAdjacencyList[currentVertexIndex].End())
-        {
-            PRINT(mVertices[unvisitedAdjacentVertex->vertexIndex].data);         // 1. visit vertex
-            mVertices[unvisitedAdjacentVertex->vertexIndex].isVisited = true;    // 2. mark vertex as visited
-            stack.Push(unvisitedAdjacentVertex->vertexIndex);                    // 3. push vertex onto stack
-        }
-        else
-            stack.Pop();
-    }
-
-    PRINTLN(""); PRINTLN("");
-
-    // reset vertex flag
-    for (int i = 0; i < mVertices.Size(); i++)
-        mVertices[i].isVisited = false;
 }
 
 template <typename T>
-void Graph<T>::DepthFirstSearchRecursive(int vertexIndex) const
+int Graph<T>::GetUnvisitedAdjacentNodeIndex(unsigned int nodeIndex) const
 {
-    static int level = 0;
-    
-    if (vertexIndex < 0 || vertexIndex >= mVertices.Size())
-        throw IndexOutOfBoundsException();
+    for (unsigned int edgeIndex : mAdjacencyList[nodeIndex])
+        if (!mNodes[mEdges[edgeIndex].nodeIndex2].visited)
+            return mEdges[edgeIndex].nodeIndex2;
 
-    if (Empty())
-        return;
-
-    level++;
-
-    if (level == 1)
-        PRINT("depth first search (recursive implementation): ");
-    
-    PRINT(mVertices[vertexIndex].data);       // 1. visit vertex
-    mVertices[vertexIndex].isVisited = true;  // 2. mark vertex as visited
-                                                   
-    typename SinglyLinkedList<AdjacencyData>::Iterator unvisitedAdjacentVertex = mAdjacencyList[vertexIndex].Begin();
-
-    while ((unvisitedAdjacentVertex = GetUnvisitedAdjacentVertex(vertexIndex)) != mAdjacencyList[vertexIndex].End())
-        DepthFirstSearchRecursive(unvisitedAdjacentVertex->vertexIndex);    // 3. push vertex onto (implicit) stack
-
-    if (level == 1)
-    {
-        PRINTLN(""); PRINTLN("");
-
-        // reset vertex flag
-        for (int i = 0; i < mVertices.Size(); i++)
-            mVertices[i].isVisited = false;
-    }
-
-    level--;
+    return -1;
 }
 
 #include "../ADT/queue/queue.hpp"
 
 template <typename T>
-void Graph<T>::BreadthFirstSearch(int startVertexIndex) const
+template <typename F>
+void Graph<T>::BreadthFirstSearch(unsigned int startNodeIndex, const F&f)
 {
-    if (startVertexIndex < 0 || startVertexIndex >= mVertices.Size())
-        throw IndexOutOfBoundsException();
+    Queue<unsigned int> nodeQueue;
 
-    if (Empty())
-        return;
+    f(mNodes[startNodeIndex]);                  // visit node
+    mNodes[startNodeIndex].visited = true;      // mark node as visited
+    nodeQueue.Enqueue(startNodeIndex);          // insert note into queue
 
-    Queue<int> queue;
-
-    PRINT("breadth first search: ");
-
-    PRINT(mVertices[startVertexIndex].data);         // 1. visit vertex
-    mVertices[startVertexIndex].isVisited = true;    // 2. mark vertex as visited
-    queue.Enqueue(startVertexIndex);                 // 3. put vertex into queue
-
-    while (!queue.Empty())
+    while (!nodeQueue.Empty())
     {
-        int currentVertexIndex = queue.Front();
+        unsigned int currentNode = nodeQueue.Front();
 
-        typename SinglyLinkedList<AdjacencyData>::Iterator unvisitedAdjacentVertex = GetUnvisitedAdjacentVertex(currentVertexIndex);
-
-        if (unvisitedAdjacentVertex != mAdjacencyList[currentVertexIndex].End())
+        int unvisitedAdjacentNodeIndex;
+        while ((unvisitedAdjacentNodeIndex = GetUnvisitedAdjacentNodeIndex(currentNode)) != -1)
         {
-            PRINT(mVertices[unvisitedAdjacentVertex->vertexIndex].data);        // 1. visit vertex
-            mVertices[unvisitedAdjacentVertex->vertexIndex].isVisited = true;   // 2. mark vertex as visited
-            queue.Enqueue(unvisitedAdjacentVertex->vertexIndex);                // 3. put vertex into queue
+            f(mNodes[unvisitedAdjacentNodeIndex]);                                     // visit node
+            mNodes[unvisitedAdjacentNodeIndex].visited = true;                         // mark node as visited
+            nodeQueue.Enqueue(static_cast<unsigned>(unvisitedAdjacentNodeIndex));      // insert note into queue
         }
-        else
-            queue.Dequeue();
+
+        nodeQueue.Dequeue();
     }
 
-    PRINTLN(""); PRINTLN("");
+    for (Node const &node : mNodes)   // reset visited flag
+        node.visited = false;
+}
 
-    // reset vertex flag
-    for (int i = 0; i < mVertices.Size(); i++)
-        mVertices[i].isVisited = false;
+#include "../ADT/stack/stack.hpp"
+
+template <typename T>
+template <typename F>
+void Graph<T>::DepthFirstSearch(unsigned int startNodeIndex, const F&f)
+{
+    Stack<unsigned int> nodeStack;
+
+    f(mNodes[startNodeIndex]);                   // visit node
+    mNodes[startNodeIndex].visited = true;       // mark node as visited
+    nodeStack.Push(startNodeIndex);              // push node onto stack
+
+    while (!nodeStack.Empty())
+    {
+        unsigned int currentNode = nodeStack.Top();
+
+        int unvisitedAdjacentNodeIndex;
+        if ((unvisitedAdjacentNodeIndex = GetUnvisitedAdjacentNodeIndex(currentNode)) != -1)
+        {
+            f(mNodes[unvisitedAdjacentNodeIndex]);                                  // visit node
+            mNodes[unvisitedAdjacentNodeIndex].visited = true;                      // mark node as visited
+            nodeStack.Push(static_cast<unsigned>(unvisitedAdjacentNodeIndex));      // push node onto stack
+        }
+        else
+            nodeStack.Pop();
+    }
+
+    for (Node const &node : mNodes)   // reset visited flag
+        node.visited = false;
+}
+
+template <typename T>
+template <typename F>
+void Graph<T>::DepthFirstSearchRecursive(unsigned int nodeIndex, const F&f)
+{
+    static unsigned int level = 0U;
+
+    level++;
+
+    f(mNodes[nodeIndex]);                // visit node
+    mNodes[nodeIndex].visited = true;    // mark node as visited
+
+    int nextNode;
+    while ((nextNode = GetUnvisitedAdjacentNodeIndex(nodeIndex)) != -1)
+        DepthFirstSearchRecursive(nextNode, f);           // push node onto (implicit) stack
+
+    level--;
+
+    if (level == 0U)
+        for (Node const &node : mNodes)  // reset visited flag
+            node.visited = false;
 }
 
 #define TYPE_PARAM_HEAP_QUEUE
 #include "../ADT/priority queue/priority_queue.hpp"
 
 template <typename T>
-void Graph<T>::SingleSourceShortestPath(int startVertexIndex) const
+Vector<Vector<const typename Graph<T>::Node*>> Graph<T>::DijkstraShortestPath(unsigned int startNodeIndex) const
 {
-    if (startVertexIndex < 0 || startVertexIndex >= mVertices.Size())
-        throw IndexOutOfBoundsException();
-
-    if (Empty())
-        return;
-
-    for (int i = 0; i < mVertices.Size(); i++)
+    for (unsigned int i = 0; i < mNodes.Size(); i++)
     {
-        mVertices[i].isVisited = false;
-        mVertices[i].isInQueue = false;
-        mVertices[i].parentVertexIndex = -1;
-        mVertices[i].distance = startVertexIndex == i ? 0 : INF;
+        mNodes[i].distance = i == startNodeIndex ? 0.0f : INF;    // all nodes but starting node start with INF as distance
+        mNodes[i].visited = false;
+        mNodes[i].parentNodeIndex = -1;
     }
 
-    const auto &comparator = [this](int v1, int v2) { return mVertices[v1].distance < mVertices[v2].distance; };
-    PriorityQueue<int, decltype(comparator)> priorityQueue(comparator);
+    auto comparator = [this](unsigned int v1, unsigned int v2) -> bool { return mNodes[v1].distance < mNodes[v2].distance; };
+    PriorityQueue<unsigned int, decltype(comparator)> nodePriorityQueue(comparator);
 
-    priorityQueue.Insert(startVertexIndex);
-    mVertices[startVertexIndex].isInQueue = true;
+    nodePriorityQueue.Insert(startNodeIndex);                                 // insert start node into priority queue
 
-    while (!priorityQueue.Empty())
+    while (!nodePriorityQueue.Empty())
     {
-        int currentVertexIndex = priorityQueue.Peek();     // 1. get vertex with min distance
-        mVertices[currentVertexIndex].isVisited = true;    // 2. mark vertex as visited
-        priorityQueue.Remove();                            // 3. remove vertex from priority queue
+        unsigned int currentNodeIndex;
+        while (mNodes[currentNodeIndex = nodePriorityQueue.Peek()].visited)   // get first node in priority queue 
+            nodePriorityQueue.Remove();                                       // if node has been already visited remove node (duplicate)
 
-        typename SinglyLinkedList<AdjacencyData>::Iterator unvisitedAdjacentVertex = mAdjacencyList[currentVertexIndex].Begin();  
-        while (unvisitedAdjacentVertex != mAdjacencyList[currentVertexIndex].End())
+        mNodes[currentNodeIndex].visited = true;                              // mark node as visited
+        nodePriorityQueue.Remove();                                           // remove node from priority queue
+        
+        for (unsigned int edgeIndex : mAdjacencyList[currentNodeIndex])       // find all unvisited adjacent nodes
         {
-            int currentDistance = mVertices[unvisitedAdjacentVertex->vertexIndex].distance;       
-            int newDistance = mVertices[currentVertexIndex].distance + unvisitedAdjacentVertex->edgeWeight;
-            
-            if (newDistance < currentDistance)   // 4. if distance is less, update path
+
+            if (mNodes[mEdges[edgeIndex].nodeIndex2].visited)
+                continue;  
+
+            unsigned int unvisitedAdjacentNodeIndex = mEdges[edgeIndex].nodeIndex2;             
+
+            float currentDistance = mNodes[unvisitedAdjacentNodeIndex].distance;
+            float newDistance = mNodes[currentNodeIndex].distance + mEdges[edgeIndex].weight;
+
+            if (newDistance < currentDistance)                                // if distance is shorter relax edge 
             {
-                mVertices[unvisitedAdjacentVertex->vertexIndex].distance = newDistance;
-                mVertices[unvisitedAdjacentVertex->vertexIndex].parentVertexIndex = currentVertexIndex;
+                mNodes[unvisitedAdjacentNodeIndex].distance = newDistance;
+                mNodes[unvisitedAdjacentNodeIndex].parentNodeIndex = currentNodeIndex;
 
-                if (!mVertices[unvisitedAdjacentVertex->vertexIndex].isInQueue)   // 5. if vertex not in priority queue, put into queue and mark as in queue
-                {
-                    priorityQueue.Insert(unvisitedAdjacentVertex->vertexIndex);
-                    mVertices[unvisitedAdjacentVertex->vertexIndex].isInQueue = true;
-                }
+                nodePriorityQueue.Insert(unvisitedAdjacentNodeIndex);         // insert node into queue (duplicates)
             }
-
-            ++unvisitedAdjacentVertex;
         }
     }
 
-    // display path
-    for (int i = 0; i < mVertices.Size(); i++)
+    Vector<Vector<const typename Graph<T>::Node*>> paths;
+    paths.Resize(mNodes.Size());
+
+    for (unsigned int i = 0; i < mNodes.Size(); i++)
     {
-        if (i == startVertexIndex)
-            continue;
-            
-        PRINT("Shortest path from "); 
-        PRINT(mVertices[startVertexIndex].data); 
-        PRINT(" to "); 
-        PRINT(mVertices[i].data);
-        PRINT(": ");
-
-        Vector<int> path(mVertices.Size());
-        int j = 0;
-
-        path[j++] = i;
-        int index = i;
-
-        if (mVertices[i].parentVertexIndex == -1)
+        if (i == startNodeIndex)
         {
-            PRINTLN("no path");
+            paths[i].InsertFirst(&mNodes[i]);
             continue;
         }
 
-        while (index != startVertexIndex)
+        unsigned int currentNodeIndex = i;
+        do 
         {
-            path[j++] = mVertices[index].parentVertexIndex;
-            index = mVertices[index].parentVertexIndex;
-        }
+            paths[i].InsertFirst(&mNodes[currentNodeIndex]);
+            currentNodeIndex = mNodes[currentNodeIndex].parentNodeIndex;
+        } while (currentNodeIndex != startNodeIndex);
 
-        int cost = 0;
-
-        while (--j >= 0)
-        {
-            PRINT(mVertices[path[j]].data);
-            
-            if (j > 0)
-            {
-                typename SinglyLinkedList<AdjacencyData>::Iterator it = mAdjacencyList[path[j]].Begin();
-                while (it != mAdjacencyList[path[j]].End())
-                {
-                    if (it->vertexIndex == path[j - 1])
-                    {
-                        cost += it->edgeWeight;
-                        break;
-                    }
-
-                    ++it;
-                }
-            }
-        }
-
-        PRINT(" cost: "); PRINT(cost);
-
-        PRINTLN("");    
+        paths[i].InsertFirst(&mNodes[startNodeIndex]);
     }
-
-    PRINTLN(""); 
-
-    // reset vertex flag     
-    for (int i = 0; i < mVertices.Size(); i++)
-        mVertices[i].isVisited = false;      
+    
+    return paths;
 }
 
 template <typename T>
-void Graph<T>::A_Star(int startVertexIndex, int endVertexIndex) const
+Vector<const typename Graph<T>::Node*> Graph<T>::DijkstraShortestPath(unsigned int startNodeIndex, unsigned int endNodeIndex) const
 {
-    if (startVertexIndex < 0 || startVertexIndex >= mNumVertices || endVertexIndex < 0 || endVertexIndex >= mNumVertices)
-        throw IndexOutOfBoundsException();
-
-    if (Empty())
-        return;
-
-    for (int i = 0; i < mNumvertices; i++)
+    for (const Node &node : mNodes)
     {
-        mVertices[i].distance = i == startVertexIndex ? 0 : INF;
-        mVertices[i].parentVertexIndex = -1;
-        mVertices[i].isVisited = false;
-        mVertices[i] = isInQueue = false;
+        node.visited = false;
+        node.distance = INF;
+        node.parentNodeIndex = -1;
+    }
+    mNodes[startNodeIndex].distance = 0.0f;
+
+    auto const &comparator = [this] (unsigned int nodeIndex1, unsigned int nodeIndex2) { return mNodes[nodeIndex1].distance < mNodes[nodeIndex2].distance;};
+    PriorityQueue<unsigned int, decltype(comparator)> nodePriorityQueue(comparator);
+
+    nodePriorityQueue.Insert(startNodeIndex);
+
+    while (!nodePriorityQueue.Empty())
+    {
+        unsigned int currentNodeIndex;
+        while (mNodes[currentNodeIndex = nodePriorityQueue.Peek()].visited)
+            nodePriorityQueue.Remove();
+
+        if (currentNodeIndex == endNodeIndex)   // stop algorithm if end node is found
+            break;
+
+        mNodes[currentNodeIndex].visited = true;
+        nodePriorityQueue.Remove(); 
+
+        for (unsigned int edgeIndex : mAdjacencyList[currentNodeIndex])  
+        {
+            if (mNodes[mEdges[edgeIndex].nodeIndex2].visited)
+                continue;
+
+            unsigned int unvisitedAdjacentNodeIndex = mEdges[edgeIndex].nodeIndex2;
+            
+            float distance = mNodes[unvisitedAdjacentNodeIndex].distance;
+            float newDistance = mNodes[currentNodeIndex].distance + mEdges[edgeIndex].weight;
+            if (newDistance < distance)
+            {
+                mNodes[unvisitedAdjacentNodeIndex].distance = newDistance;
+                mNodes[unvisitedAdjacentNodeIndex].parentNodeIndex = currentNodeIndex;
+
+                nodePriorityQueue.Insert(unvisitedAdjacentNodeIndex);
+            }
+        }       
     }
 
-    auto comparator = [this](int a, int b) -> bool { return mVertices[a].distance + mVertices[a].heuristic < mVertices[b].distance + mVertices[b].heuristic; }; 
-    
-    PriorityQueue<int, decltype(comparator)> priorityQueue(comparator);
+    Vector<Node const*> path;
 
-    priorityQueue.Insert(startVertexIndex);
-    mVertices[startVertexIndex].isInQueue = true;
-
-    while (!priorityQueue.Empty())
+    unsigned int nodeIndex = endNodeIndex;
+    while (nodeIndex != startNodeIndex)
     {
-        int currentVertexIndex = priorityQueue.Peek();
-        mVertices[currentVertexIndex].isVisited = true;
-        priorityQueue.Remove();
-
-        
+        path.InsertFirst(&mNodes[nodeIndex]);
+        nodeIndex = mNodes[nodeIndex].parentNodeIndex;
     }
+
+    path.InsertFirst(&mNodes[startNodeIndex]);
+
+    return path;
 }
 
-#endif  // GRAPH_H
+template <typename T>
+Vector<const typename Graph<T>::Node*> Graph<T>::AStar(unsigned int startNodeIndex, unsigned int endNodeIndex) const
+{
+    for (Node const &node : mNodes)
+    {
+        node.visited = false;
+        node.distance = INF;
+        node.parentEdgeIndex = -1;
+        node.heuristic = 0.0f;
+    }
+    mNodes[startNodeIndex].distance = 0.0f;
+
+    auto comparator = [this](const unsigned int &nodeIndex1, const unsigned int &nodeIndex2) -> bool { return mNodes[nodeIndex1].distance + mNodes[nodeIndex1].heuristic < mNodes[nodeIndex2].distance + mNodes[nodeIndex2].heuristic; };
+    PriorityQueue<unsigned int, decltype(comparator)> nodePriorityQueue(comparator);
+
+    nodePriorityQueue.Insert(startNodeIndex);
+
+    while (!nodePriorityQueue.Empty())
+    {
+        unsigned int currentNodeIndex;
+        while (mNodes[currentNodeIndex = nodePriorityQueue.Peek()].visited)  // get next node from priority queue
+            nodePriorityQueue.Remove();
+
+        if (currentNodeIndex == endNodeIndex)  // found end node
+            break;
+
+        mNodes[currentNodeIndex].visited = true;
+        nodePriorityQueue.Remove();
+
+        for (unsigned int edgeIndex : mAdjacencyList[currentNodeIndex])
+        {
+            unsigned int adjacentNodeIndex = mEdges[edgeIndex].nodeIndex2;
+
+            float currentDistance = mNodes[adjacentNodeIndex].distance;
+            float newDistance = mNodes[currentNodeIndex].distance + mEdges[edgeIndex].weight;
+
+            if (newDistance < currentDistance)
+            {
+                mNodes[adjacentNodeIndex].distance = newDistance;
+                mNodes[adjacentNodeIndex].parentNodeIndex = currentNodeIndex;
+
+                if (mNodes[adjacentNodeIndex].heuristic == 0.0f)
+                    GetHeuristic(adjacentNodeIndex, startNodeIndex);      // calculate node's heuristic 
+
+                nodePriorityQueue.Insert(adjacentNodeIndex);              // insert into priority queue
+
+                if (mNodes[adjacentNodeIndex].visited)                    // if a visited node has been updated put it back into the queue
+                    mNodes[adjacentNodeIndex].visited = false;
+            }
+        }
+    }
+
+    Vector<Node const*> path;
+
+    unsigned int nodeIndex = endNodeIndex;
+    while (nodeIndex != startNodeIndex)
+    {
+        path.InsertFirst(&mNodes[nodeIndex]);
+        nodeIndex = mNodes[nodeIndex].parentNodeIndex;
+    }
+
+    path.InsertFirst(&mNodes[startNodeIndex]);
+
+    return path;
+}

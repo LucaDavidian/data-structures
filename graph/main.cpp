@@ -1,135 +1,147 @@
-//#include "graph_adjacency_list.hpp"
-#include "graph_adjacency_matrix.hpp"
+//#include "graph_edge_list.hpp"
+//#include "graph_adjacency_matrix.hpp"
+#include "graph_adjacency_list.hpp"
+#include <iostream>
 #include <string>
+#include <cmath>
+
+template <typename T>
+class NodeVisitor
+{
+public:
+    void operator()(const typename Graph<T>::Node &node) const
+    {
+        std::cout << node.data << std::endl;
+    }
+};
+
+class Vector2D
+{
+friend std::ostream &operator<<(std::ostream &os, const Vector2D &vector)
+{
+    return os << "(x: " << vector.x << " y: " << vector.y << ") ---> ";
+}
+public:
+    Vector2D(float x = 0.0f, float y = 0.0f) : x(x), y(y) {}
+
+    float X() const { return x; }
+    float Y() const { return y; }
+
+    Vector2D const operator-(const Vector2D &other) const { return Vector2D(x - other.x, y - other.y); }
+    float Length() const { return std::sqrt(x * x + y * y); }
+private:
+    float x;
+    float y;
+};
+
+std::ostream &operator<<(std::ostream &os, const Vector2D &vector);
 
 int main(int argc, char **argv)
 {
-    Graph<std::string,10> graph;   
-    //Graph<std::string> graph;   
+    Graph<std::string> gi;
 
-    graph.AddVertex("A");
-    graph.AddVertex("B");
-    graph.AddVertex("C");
-    graph.AddVertex("D");
-    graph.AddVertex("E");
+    gi.AddNode("A");
+    gi.AddNode("B");
+    gi.AddNode("C");
+    gi.AddNode("D");
+    gi.AddNode("E");
+    gi.AddNode("F");
+    gi.AddNode("G");
 
-    graph.AddEdge(0, 1);
-    graph.AddEdge(2, 1);
-    graph.AddEdge(0, 3);
-    graph.AddEdge(4, 3);
+    gi.AddEdge(0, 1);
+    gi.AddEdge(0, 2);
+    gi.AddEdge(0, 3);
+    gi.AddEdge(0, 4);   
+    gi.AddEdge(1, 4);
+    gi.AddEdge(1, 5);
+    gi.AddEdge(3, 6);   
+    gi.AddEdge(4, 6);   
 
-    graph.DepthFirstSearch(0);
-    graph.DepthFirstSearchRecursive(0);
-    graph.BreadthFirstSearch(0);
+    std::cout << "breadth first search: " << '\n';   
 
-    Graph<std::string,10> graph2;  
-    //Graph<std::string> graph2;
+    gi.BreadthFirstSearch(0, NodeVisitor<std::string>()); 
 
-    graph2.AddVertex("A");
-    graph2.AddVertex("B");
-    graph2.AddVertex("C");
-    graph2.AddVertex("D");
-    graph2.AddVertex("E");
-    graph2.AddVertex("F");
-    graph2.AddVertex("G");
-    graph2.AddVertex("H");
-    graph2.AddVertex("I");
+    std::cout << "depth first search: " << '\n';   
 
-    graph2.AddEdge(0, 1);
-    graph2.AddEdge(0, 2);
-    graph2.AddEdge(0, 3);
-    graph2.AddEdge(0, 4);
-    graph2.AddEdge(1, 5);
-    graph2.AddEdge(5, 7);
-    graph2.AddEdge(3, 6);
-    graph2.AddEdge(6, 8);
+    gi.DepthFirstSearch(0, NodeVisitor<std::string>()); 
 
-    graph2.BreadthFirstSearch(0);
+    std::cout << "depth first search (recursive): " << '\n';   
 
-    // Graph<std::string,10> graph3;
+    gi.DepthFirstSearchRecursive(0, NodeVisitor<std::string>()); 
 
-    // graph3.AddVertex("A");
-    // graph3.AddVertex("B");
-    // graph3.AddVertex("C");
-    // graph3.AddVertex("D");
-    // graph3.AddVertex("E");
+    std::cout << "Dijkstra single source shortest path from A: " << '\n';
 
-    // graph3.AddEdge(0, 1);
-    // graph3.AddEdge(0, 2);
-    // graph3.AddEdge(0, 3);
-    // graph3.AddEdge(0, 4);
-    // graph3.AddEdge(1, 2);
-    // graph3.AddEdge(1, 3);
-    // graph3.AddEdge(1, 4);
-    // graph3.AddEdge(2, 3);
-    // graph3.AddEdge(2, 4);
-    // graph3.AddEdge(3, 4);
+    auto shortestPaths = gi.DijkstraShortestPath(0);
 
-    // PRINT("minimum spanning tree: ");
-    // graph3.MinimumSpanningTreeDFS(0);
-    // PRINTLN("");
+    for (auto path : shortestPaths)
+    {
+        for (auto node : path)
+            std::cout << node->data << " ";
 
-    // Graph<std::string,10> graph4;
+        std::cout << '\n';
+    }
 
-    // graph4.AddVertex("A");
-    // graph4.AddVertex("B");
-    // graph4.AddVertex("C");
-    // graph4.AddVertex("D");
-    // graph4.AddVertex("E");
+    std::cout << "Dijkstra single source shortest path from A to G" << '\n';
 
-    // graph4.AddEdge(0, 2, 1, true);
-    // graph4.AddEdge(1, 0, 1, true);
-    // graph4.AddEdge(1, 4, 1, true);
-    // graph4.AddEdge(3, 4, 1, true);
-    // graph4.AddEdge(4, 2, 1, true);    
+    auto shortestPath = gi.DijkstraShortestPath(0, 6);
 
-    // PRINTLN("connectivity table (DFS directed graph): ");
-    // for (int i = 0; i < graph4.Size(); i++)
-    // {
-    //     PRINT("starting from "); PRINT(i); PRINT(": ");
-    //     graph4.DepthFirstSearch(i);
-    //     PRINTLN("");
-    // }
-    // PRINTLN("");
+    for (auto node : shortestPath)
+        std::cout << node->data << " ";
 
-    // unsigned int closure[10][10];
-    // graph4.TransitiveClosure(closure);
+    std::cout << '\n';
 
-    // PRINT("A is connected to C: "); PRINTLN(closure[0][2] == 1 ? "yes" : "no");  // yes
-    // PRINT("A is connected to E: "); PRINTLN(closure[0][4] == 1 ? "yes" : "no");  // no
-    // PRINT("B is connected to C: "); PRINTLN(closure[1][2] == 1 ? "yes" : "no");  // yes
-    // PRINT("D is connected to A: "); PRINTLN(closure[3][0] == 1 ? "yes" : "no");  // no
-    // PRINTLN("");
+    std::cout << "Dijkstra single source shortest path from A to F" << '\n';
 
-    Graph<std::string,5> graph5;
-    //Graph<std::string> graph5;
+    shortestPath = gi.DijkstraShortestPath(0, 5);
 
-    graph5.AddVertex("A", 10);
-    graph5.AddVertex("B", 5);
-    graph5.AddVertex("C", 4);
-    graph5.AddVertex("D", 4);
-    graph5.AddVertex("E", 0);
+    for (auto node : shortestPath)
+        std::cout << node->data << " ";
 
-    graph5.AddEdge(0, 1, 50, true);
-    graph5.AddEdge(0, 3, 80, true);
-    graph5.AddEdge(1, 2, 60, true);
-    graph5.AddEdge(1, 3, 90, true);
-    graph5.AddEdge(2, 4, 40, true); 
-    graph5.AddEdge(3, 2, 20, true);
-    graph5.AddEdge(3, 4, 70, true);
-    graph5.AddEdge(4, 1, 50, true); 
+    std::cout << '\n';
 
-    PRINTLN("Dijkstra's shortest path algorithm: ");
-    graph5.SingleSourceShortestPath(0);
-    PRINTLN("");
+    Graph<Vector2D> gv;
 
-    PRINTLN("A* shortest path algorithm: ");
-    graph5.A_Star(0, 4);
-    PRINTLN("");
+    gv.AddNode(Vector2D(0.0f, 0.0f)); // node 0
+    gv.AddNode(Vector2D(1.0f, 0.0f)); // node 1
+    gv.AddNode(Vector2D(2.0f, 0.0f)); // node 2
+    gv.AddNode(Vector2D(0.0f, 1.0f)); // node 3
+    gv.AddNode(Vector2D(1.0f, 1.0f)); // node 4
+    gv.AddNode(Vector2D(2.0f, 1.0f)); // node 5
+    gv.AddNode(Vector2D(0.0f, 2.0f)); // node 6
+    gv.AddNode(Vector2D(1.0f, 2.0f)); // node 7
+    gv.AddNode(Vector2D(2.0f, 2.0f)); // node 8
 
-    PRINTLN("Dijkstra's shortest path algorithm: ");
-    graph5.SingleSourceShortestPath(4);
-    PRINTLN("");
+    gv.AddEdge(0, 1, 2.0f, true);
+    gv.AddEdge(0, 3, 1.0f, true);
+    gv.AddEdge(1, 2, 3.0f, true);
+    gv.AddEdge(1, 4, 4.0f, true);
+    gv.AddEdge(2, 5, 2.0f, true);
+    gv.AddEdge(3, 6, 2.0f, true);
+    gv.AddEdge(3, 4, 3.0f, true);
+    gv.AddEdge(4, 5, 1.0f, true);
+    gv.AddEdge(4, 7, 5.0f, true);
+    gv.AddEdge(5, 8, 1.5f, true);
+    gv.AddEdge(6, 7, 0.5f, true);
+    gv.AddEdge(7, 8, 2.0f, true);
+    gv.AddEdge(7, 4, 0.1f, true);
+    gv.AddEdge(4, 1, 0.2f, true);
+    gv.AddEdge(5, 2, 0.2f, true);
+
+    std::cout << "Dijkstra shortest path from 0,0 to 2,1" << '\n';
+    Vector<Graph<Vector2D>::Node const *> shortestPath2 = gv.DijkstraShortestPath(0, 5);
+
+    for (auto node : shortestPath2)
+        std::cout << node->data << " ";
+
+    std::cout << '\n';
+
+    std::cout << "A* shortest path from 0,0 to 2,0" << '\n';
+    shortestPath2 = gv.AStar(0, 2);
+    
+    for (auto node : shortestPath2)
+        std::cout << node->data << " ";
+
+    std::cout << '\n';
 
     return 0;
 }
