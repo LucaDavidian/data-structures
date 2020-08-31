@@ -72,7 +72,9 @@ public:
     template <typename U>
     void InsertLast(U &&element) { Insert(mNumElements, std::forward<U>(element)); }
     template <typename U>
-    Iterator Insert(Iterator iterator, U &&element);
+    Iterator Insert(Iterator pos, U &&element);             // insert element before pos and return iterator after inserted element
+    template <typename Iter>
+    Iterator Insert(Iterator pos, Iter begin, Iter end);    // insert iterator range before pos and return iterator after last inserted element
     
     template <typename... Args>
     void Emplace(int index, Args&&... args) { Insert(index, T(std::forward<Args>(args)...)); }
@@ -81,12 +83,12 @@ public:
     template <typename... Args>
     void EmplaceLast(Args&&... args) { Emplace(mNumElements, std::forward<Args>(args)...); }
     template <typename... Args>
-    Iterator Emplace(Iterator iterator, Args&&... args) { return Insert(iterator, T(std::forward<Args>(args)...)); }
+    Iterator Emplace(Iterator pos, Args&&... args) { return Insert(pos, T(std::forward<Args>(args)...)); }
 
     void Remove(int index);
     void RemoveFirst() { Remove(0); }
     void RemoveLast() { Remove(mNumElements - 1); }
-    Iterator Remove(Iterator iterator);
+    Iterator Remove(Iterator pos);
     Iterator Remove(Iterator begin, Iterator end);
 
     T &operator[](int index) { return const_cast<T&>(static_cast<Vector const&>(*this)[index]); }
@@ -379,7 +381,7 @@ void Vector<T>::Insert(int index, U &&element)
 
 template <typename T>
 template <typename U>
-typename Vector<T>::Iterator Vector<T>::Insert(Iterator iterator, U &&element)
+typename Vector<T>::Iterator Vector<T>::Insert(Iterator pos, U &&element)
 {
     // size_t index = IndexOf(iterator);
     // Insert(index, std::forward<U>(element));
@@ -387,13 +389,13 @@ typename Vector<T>::Iterator Vector<T>::Insert(Iterator iterator, U &&element)
 
     if (mNumElements >= mCapacity)   
     {
-        size_t index = IndexOf(iterator);  // save iterator
+        size_t index = IndexOf(pos);  // save iterator
         Reserve(mCapacity == 0 ? 1 : mCapacity * 2);
-        iterator = AtIndex(index);  // restore iterator
+        pos = AtIndex(index);  // restore iterator
     }
 
-    if (iterator == End())  // if insert last or vector empty
-        new(iterator) T(std::forward<U>(element));   // copy/move-construct element (placement-new)
+    if (pos == End())  // if insert last or vector empty
+        new(pos) T(std::forward<U>(element));   // copy/move-construct element (placement-new)
     else
     {
         // move-construct new last element 
@@ -401,16 +403,61 @@ typename Vector<T>::Iterator Vector<T>::Insert(Iterator iterator, U &&element)
         new(endIt) T(std::move(*(endIt - 1)));  
 
         // shift elements up one place
-        for (Iterator it = endIt - 1; it > iterator; --it)
+        for (Iterator it = endIt - 1; it > pos; --it)
             *it = std::move(*(it - 1));
 
         // insert (copy/move-assing) element at index 
-        *iterator = std::forward<U>(element);
+        *pos = std::forward<U>(element);
     }
 
     mNumElements++;
 
-    return ++iterator;
+    return ++pos;
+}
+
+template <typename T>
+template <typename Iter>
+typename Vector<T>::Iterator Vector<T>::Insert(Iterator pos, Iter begin, Iter end)
+{
+    if (begin == end)
+       return pos;
+
+    int numElementsToInsert = end - begin;
+    int numElementsToShift = End() - pos;
+
+    if (mNumElements + numElementsToInsert >= mCapacity)
+    {
+        size_t index = IndexOf(pos);
+        Reserve(mNumElements + numElementsToInsert);
+        pos = AtIndex(index);
+    }
+
+    Iterator to = End() + numElementsToInsert - 1;
+    Iterator from = End() - 1;
+
+    for (int i = 0, j = numElementsToInsert; i < numElementsToShift; i++)  // shift elements to the end of the array
+    {
+        if (j > 0)
+        {
+            new(to--) T(std::move(*from--));
+            j--;
+        }
+        else
+            *to = std::move(*from--);      
+    }
+
+    while (begin != end)
+        if (numElementsToShift > 0)
+        {
+            *pos++ = *begin++;
+            numElementsToShift--;
+        }
+        else
+            new(pos++) T(*begin++);
+
+    mNumElements += numElementsToInsert;
+
+    return pos;
 }
 
 template <typename T>
@@ -430,11 +477,11 @@ void Vector<T>::Remove(int index)
 }
 
 template <typename T>
-typename Vector<T>::Iterator Vector<T>::Remove(Iterator iterator)
+typename Vector<T>::Iterator Vector<T>::Remove(Iterator pos)
 {
     // shift elements down one place
     Iterator it;
-    for (it = iterator; it < End() - 1; ++it)
+    for (it = pos; it < End() - 1; ++it)
         *it = std::move(*(it + 1));
 
     // destroy last element
@@ -442,7 +489,7 @@ typename Vector<T>::Iterator Vector<T>::Remove(Iterator iterator)
 
     mNumElements--;
 
-    return iterator;
+    return pos;
 }
 
 template <typename T>

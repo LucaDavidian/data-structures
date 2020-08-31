@@ -170,10 +170,19 @@ int main(int argc, char *argv[])
 
     std::cout << "done" << std::endl;
 
-    const Vector<int> vint = {1, 3, 4, 6, 72, 442};
+    Vector<int> vint = {1, 3, 4, 6, 72, 442};
 
     for (int i : vint)
-        std::cout << i << std::endl;
+        std::cout << i << " ";
+    std::cout << std::endl;
+
+    Vector<float> vff = {1.2f, 3.3f, 0.5f};
+
+    vint.Insert(vint.AtIndex(3), vff.Begin(), vff.End());
+
+    for (int i : vint)
+        std::cout << i << " ";
+    std::cout << std::endl;
 
     return 0;
 }
