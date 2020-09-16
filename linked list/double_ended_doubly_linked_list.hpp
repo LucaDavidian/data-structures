@@ -52,6 +52,8 @@ public:
     {
     friend class DoublyLinkedList;   // corresponding instantiation of class template DoublyLinkedList is friend
     public:
+        ConstIterator(const Iterator &iterator) : mCurrent(iterator.mCurrent), mPrevious(iterator.mPrevious) {} // implicit conversion from Iterator to ConstIterator
+        
         const T &operator*() { return mCurrent->data; }
         const T *operator->() { return &mCurrent->data; }
         ConstIterator &operator++() { mPrevious = mCurrent; mCurrent = mCurrent->next; return *this; }
@@ -62,7 +64,6 @@ public:
         bool operator!=(const ConstIterator &other) const { return !(this->operator==(other)); }
     private:
         ConstIterator(Node *current, Node *previous) : mCurrent(current), mPrevious(previous) {}  // private constructor (only LinkedList can construct an Iterator)
-        ConstIterator(const Iterator &iterator) : mCurrent(iterator.mCurrent), mPrevious(iterator.mPrevious) {} // implicit conversion from Iterator to ConstIterator
         
         Node *mCurrent;
         Node *mPrevious;
