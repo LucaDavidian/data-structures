@@ -1,5 +1,5 @@
-#include "singly_linked_list.hpp"
-#include "double_ended_singly_linked_list.hpp"
+//#include "singly_linked_list.hpp"
+//#include "double_ended_singly_linked_list.hpp"
 #include "double_ended_doubly_linked_list.hpp"
 #include "circularly_linked_list.hpp"
 
@@ -102,6 +102,13 @@ int main(int argc, char **argv)
 
     PrintSequence(newList2);
 
+    PRINTLN("");
+
+    for (const std::string &element : newList2)
+        PRINTLN(element); 
+
+    PRINTLN("");
+
     /**** circularly linked list ****/
 
     CircularlyLinkedList<std::string> songs;
@@ -123,7 +130,6 @@ int main(int argc, char **argv)
 
     PRINTLN(songs.Back());
     PRINTLN(songs.Front());
-
 
     return 0;
 }

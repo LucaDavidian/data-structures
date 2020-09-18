@@ -105,6 +105,31 @@ private:
     size_t mNumElements;
 };
 
+// begin and end functions (to use in range-for loop)
+template <typename T>
+typename DE_SinglyLinkedList<T>::Iterator begin(DE_SinglyLinkedList<T> &list)
+{
+    return list.Begin();
+}
+
+template <typename T>
+typename DE_SinglyLinkedList<T>::Iterator end(DE_SinglyLinkedList<T> &list)
+{
+    return list.End();
+}
+
+template <typename T>
+typename DE_SinglyLinkedList<T>::ConstIterator begin(const DE_SinglyLinkedList<T> &list)
+{
+    return list.Begin();
+}
+
+template <typename T>
+typename DE_SinglyLinkedList<T>::ConstIterator end(const DE_SinglyLinkedList<T> &list)
+{
+    return list.End();
+}
+
 template <typename T>
 template <typename U>
 void DE_SinglyLinkedList<T>::InsertFirst(U &&element)

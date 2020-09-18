@@ -132,18 +132,6 @@ typename Vector<T>::ConstIterator end(const Vector<T> &vector)
 }
 
 template <typename T>
-typename Vector<T>::ConstIterator cbegin(const Vector<T> &vector)
-{
-    return vector.CBegin();
-}
-
-template <typename T>
-typename Vector<T>::ConstIterator cend(const Vector<T> &vector)
-{
-    return vector.CEnd();
-}
-
-template <typename T>
 Vector<T>::Vector(size_t size)
 {
     // allocate untyped memory for array (operator new)

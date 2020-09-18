@@ -126,6 +126,31 @@ private:
     size_t mNumElements;
 };
 
+// begin and end functions (to use in range-for loop)
+template <typename T>
+typename DoublyLinkedList<T>::Iterator begin(DoublyLinkedList<T> &list)
+{
+    return list.Begin();
+}
+
+template <typename T>
+typename DoublyLinkedList<T>::Iterator end(DoublyLinkedList<T> &list)
+{
+    return list.End();
+}
+
+template <typename T>
+typename DoublyLinkedList<T>::ConstIterator begin(const DoublyLinkedList<T> &list)
+{
+    return list.Begin();
+}
+
+template <typename T>
+typename DoublyLinkedList<T>::ConstIterator end(const DoublyLinkedList<T> &list)
+{
+    return list.End();
+}
+
 template <typename T>
 DoublyLinkedList<T>::DoublyLinkedList(const DoublyLinkedList &other) : mFirst(nullptr), mLast(nullptr), mNumElements(0)
 {
