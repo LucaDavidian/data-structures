@@ -19,6 +19,8 @@ public:
     bool Empty() const { return mContainer.Empty(); }
     size_t Size() const { return mContainer.Size(); }
 
+    void Clear() { mContainer.Clear(); }
+
     template <typename U>
     void Enqueue(U &&element) { mContainer.InsertLast(std::forward<U>(element)); }
     void Dequeue() { mContainer.RemoveFirst(); }
@@ -52,7 +54,6 @@ public:
     const T &Back() const { return mList.Back(); }
     T &Front() { return const_cast<T&>(static_cast<const Queue*>(this)->Front()); }
     const T &Front() const { return mList.Front(); }
-
 private:
     CircularlyLinkedList<T> mList;
 };

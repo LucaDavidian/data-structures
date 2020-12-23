@@ -3,8 +3,8 @@
 #include <string>
 
 #include "../../vector/vector.hpp"
-#include "../../list/circularly_linked_list.hpp"
-#include "../../array/circular_array.hpp"
+#include "../../linked list/circularly_linked_list.hpp"
+#include "../../circular array/circular_array.hpp"
 
 #define PRINT(s)      std::cout << (s)
 #define PRINTLN(s)    PRINT(s) << std::endl;

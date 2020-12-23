@@ -45,13 +45,6 @@ private:
     void GetHeuristic(unsigned int nodeIndex, unsigned int startNodeIndex) const;
 };
 
-template <typename T>   // euclidean distance (underestimating)
-void Graph<T>::GetHeuristic(unsigned int nodeIndex, unsigned int startNodeIndex) const
-{
-    T diff = mNodes[nodeIndex].data - mNodes[startNodeIndex].data;
-    mNodes[nodeIndex].heuristic = diff.Length();
-}
-
 template <typename T>
 const float Graph<T>::INF = std::numeric_limits<float>::max();
 
@@ -313,6 +306,7 @@ Vector<const typename Graph<T>::Node*> Graph<T>::AStar(unsigned int startNodeInd
         node.heuristic = 0.0f;
     }
     mNodes[startNodeIndex].distance = 0.0f;
+    GetHeuristic(startNodeIndex, endNodeIndex);
 
     auto comparator = [this](const unsigned int &nodeIndex1, const unsigned int &nodeIndex2) -> bool { return mNodes[nodeIndex1].distance + mNodes[nodeIndex1].heuristic < mNodes[nodeIndex2].distance + mNodes[nodeIndex2].heuristic; };
     PriorityQueue<unsigned int, decltype(comparator)> nodePriorityQueue(comparator);
@@ -344,7 +338,7 @@ Vector<const typename Graph<T>::Node*> Graph<T>::AStar(unsigned int startNodeInd
                 mNodes[adjacentNodeIndex].parentNodeIndex = currentNodeIndex;
 
                 if (mNodes[adjacentNodeIndex].heuristic == 0.0f)
-                    GetHeuristic(adjacentNodeIndex, startNodeIndex);      // calculate node's heuristic 
+                    GetHeuristic(adjacentNodeIndex, endNodeIndex);      // calculate node's heuristic 
 
                 nodePriorityQueue.Insert(adjacentNodeIndex);              // insert into priority queue
 
@@ -366,4 +360,11 @@ Vector<const typename Graph<T>::Node*> Graph<T>::AStar(unsigned int startNodeInd
     path.InsertFirst(&mNodes[startNodeIndex]);
 
     return path;
+}
+
+template <typename T>   // euclidean distance (underestimating)
+void Graph<T>::GetHeuristic(unsigned int nodeIndex, unsigned int endNodeIndex) const
+{
+    T diff = mNodes[nodeIndex].data - mNodes[endNodeIndex].data;
+    mNodes[nodeIndex].heuristic = diff.Length() * 0.01f;
 }

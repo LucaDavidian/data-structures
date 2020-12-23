@@ -127,8 +127,8 @@ int main(int argc, char **argv)
     gv.AddEdge(4, 1, 0.2f, true);
     gv.AddEdge(5, 2, 0.2f, true);
 
-    std::cout << "Dijkstra shortest path from 0,0 to 2,1" << '\n';
-    Vector<Graph<Vector2D>::Node const *> shortestPath2 = gv.DijkstraShortestPath(0, 5);
+    std::cout << "Dijkstra shortest path from 0,0 to 2,0" << '\n';
+    Vector<Graph<Vector2D>::Node const *> shortestPath2 = gv.DijkstraShortestPath(0, 2);
 
     for (auto node : shortestPath2)
         std::cout << node->data << " ";
