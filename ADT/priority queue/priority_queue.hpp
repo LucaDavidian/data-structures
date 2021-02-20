@@ -35,7 +35,7 @@
     {
     public:
         PriorityQueue() {}
-        PriorityQueue(const F &comparator) : mHeap(comparator) {}
+        PriorityQueue(const F &comparator = Less<T>) : mHeap(comparator) {}
 
         bool Empty() const { return mHeap.Empty(); }
         size_t Size() const { return mHeap.Size(); }

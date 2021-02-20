@@ -1,6 +1,6 @@
 //#define TYPE_ERASURE_HEAP_QUEUE   // choose heap implementation
-//#define TYPE_PARAM_HEAP_QUEUE
-#define TYPE_PARAM_VECTOR_QUEUE
+#define TYPE_PARAM_HEAP_QUEUE
+//#define TYPE_PARAM_VECTOR_QUEUE
 //#define TYPE_ERASURE_VECTOR_QUEUE
 #include "priority_queue.hpp"
 #include <iostream>
