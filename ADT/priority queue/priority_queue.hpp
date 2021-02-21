@@ -3,8 +3,8 @@
 
 #ifdef TYPE_ERASURE_HEAP_QUEUE   // heap implementation (type erased comparator)
 
-    #include "../../../function/function.hpp"
     #include "../../heap/heap_vector_erasure.hpp"
+    #include "../../../function/function.hpp"
 
     template <typename T>
     class PriorityQueue
