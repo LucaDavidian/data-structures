@@ -34,8 +34,8 @@
     class PriorityQueue
     {
     public:
-        PriorityQueue() {}
-        PriorityQueue(const F &comparator = Less<T>) : mHeap(comparator) {}
+        PriorityQueue() = default;
+        PriorityQueue(const F &comparator) : mHeap(comparator) {}
 
         bool Empty() const { return mHeap.Empty(); }
         size_t Size() const { return mHeap.Size(); }
@@ -56,10 +56,16 @@
     #include "../../../function/function.hpp"
 
     template <typename T>
+    bool Less(const T &a, const T &b)
+    {
+        return a < b;
+    }
+
+    template <typename T>
     class PriorityQueue
     {
     public:
-        PriorityQueue(const Function<bool(const T&, const T&)> &comparator) : mComparator(comparator) {}
+        PriorityQueue(const Function<bool(const T&, const T&)> &comparator = Less<T>) : mComparator(comparator) {}
 
         size_t Size() const { return mVector.Size(); }
         bool Empty() const { return mVector.Empty(); }
@@ -92,12 +98,18 @@
         if (Empty())
             mVector.Insert(0, std::forward<U>(element));
         else
-            for (size_t i = 0; i < mVector.Size(); i++)
+        {
+            size_t i;
+            for (i = 0; i < mVector.Size(); i++)
                 if (mComparator(mVector[i], element) || !mComparator(element, mVector[i]) && !mComparator(mVector[i], element))
                 {
                     mVector.Insert(i, std::forward<U>(element));
                     break;
                 }
+
+            if (i == mVector.Size())
+                mVector.InsertLast(std::forward<U>(element));
+        }
     }
 
 #elif defined TYPE_PARAM_VECTOR_QUEUE   // sorted vector implementation (template type parameter comparator)
@@ -110,11 +122,11 @@
         return a < b;
     }
 
-    template <typename T, typename F>
+    template <typename T, typename F = decltype(&Less<T>)>
     class PriorityQueue
     {
     public:
-        PriorityQueue(const F &comparator) : mComparator(comparator) {}
+        PriorityQueue(const F &comparator = &Less<T>) : mComparator(comparator) {}
 
         size_t Size() const { return mVector.Size(); }
         bool Empty() const { return mVector.Empty(); }
@@ -147,12 +159,18 @@
         if (Empty())
             mVector.Insert(0, std::forward<U>(element));
         else
-            for (size_t i = 0; i < mVector.Size(); i++)
+        {
+            size_t i;
+            for (i = 0; i < mVector.Size(); i++)
                 if (mComparator(mVector[i], element) || !mComparator(element, mVector[i]) && !mComparator(mVector[i], element))
                 {
                     mVector.Insert(i, std::forward<U>(element));
                     break;
                 }
+
+            if (i == mVector.Size())
+                mVector.InsertLast(std::forward<U>(element));
+        }
     }
 
 #endif 
