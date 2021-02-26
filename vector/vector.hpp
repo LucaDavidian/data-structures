@@ -100,6 +100,9 @@ public:
 
     Iterator AtIndex(size_t index) const { return &mArray[index]; }
     int IndexOf(ConstIterator iterator) { return iterator - mArray; }
+
+    Iterator Find(const T &key) { return const_cast<Iterator>(const_cast<Vector<T> const&>(*this).Find(key)); }
+    ConstIterator Find(const T &key) const;
 private:
     T *mArray;
     size_t mCapacity;
@@ -495,6 +498,16 @@ typename Vector<T>::Iterator Vector<T>::Remove(Iterator begin, Iterator end)
 	mNumElements -= end - begin;
 	
 	return end;
+}
+
+template <typename T>
+typename Vector<T>::ConstIterator Vector<T>::Find(const T &key) const
+{
+    for (std::size_t i = 0; i < mNumElements; i++)
+        if (key == mArray[i])
+            return ConstIterator(&mArray[i]);
+
+    return End();
 }
 
 #endif  // VECTOR_H
