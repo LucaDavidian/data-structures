@@ -5,6 +5,7 @@
 #include <utility>
 #include <exception>
 #include <initializer_list>
+#include <type_traits>
 
 using std::size_t;
 
@@ -76,14 +77,18 @@ public:
     template <typename Iter>
     Iterator Insert(Iterator pos, Iter begin, Iter end);    // insert iterator range before pos and return iterator after last inserted element
     
-    template <typename... Args>
-    void Emplace(int index, Args&&... args) { Insert(index, T(std::forward<Args>(args)...)); }
+    template <typename... Args, typename U = T, typename = typename std::enable_if<std::is_aggregate<U>::value>::type>
+    void Emplace(int index, Args&&... args);
+    template <typename... Args, typename U = T, typename = typename std::enable_if<!std::is_aggregate<U>::value>::type, typename = void>
+    void Emplace(int index, Args&&... args);
     template <typename... Args>
     void EmplaceFirst(Args&&... args) { Emplace(0, std::forward<Args>(args)...); }
     template <typename... Args>
     void EmplaceLast(Args&&... args) { Emplace(mNumElements, std::forward<Args>(args)...); }
-    template <typename... Args>
-    Iterator Emplace(Iterator pos, Args&&... args) { return Insert(pos, T(std::forward<Args>(args)...)); }
+    template <typename... Args, typename U = T, typename = typename std::enable_if<std::is_aggregate<U>::value>::type>
+    Iterator Emplace(Iterator pos, Args&&... args);
+    template <typename... Args, typename U = T, typename = typename std::enable_if<!std::is_aggregate<U>::value>::type, typename = void>
+    Iterator Emplace(Iterator pos, Args&&... args);
 
     void Remove(int index);
     void RemoveFirst() { Remove(0); }
@@ -449,6 +454,34 @@ typename Vector<T>::Iterator Vector<T>::Insert(Iterator pos, Iter begin, Iter en
     mNumElements += numElementsToInsert;
 
     return pos;
+}
+
+template <typename T>
+template <typename... Args, typename, typename>
+void Vector<T>::Emplace(int index, Args&&... args) 
+{ 
+    Insert(index, T{std::forward<Args>(args)...}); 
+}
+
+template <typename T>
+template <typename... Args, typename, typename, typename>
+void Vector<T>::Emplace(int index, Args&&... args) 
+{ 
+    Insert(index, T(std::forward<Args>(args)...)); 
+}
+
+template <typename T>
+template <typename... Args, typename, typename>
+typename Vector<T>::Iterator Vector<T>::Emplace(Iterator pos, Args&&... args)
+{
+    return Insert(pos, T{std::forward<Args>(args)...}); 
+}
+
+template <typename T>
+template <typename... Args, typename U, typename, typename>
+typename Vector<T>::Iterator Vector<T>::Emplace(Iterator pos, Args&&... args)
+{
+    return Insert(pos, T(std::forward<Args>(args)...)); 
 }
 
 template <typename T>
