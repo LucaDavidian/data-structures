@@ -1,76 +1,64 @@
-#ifndef SPARSE_SET
-#define SPARSE_SET
+#ifndef SPARSE_SET_H
+#define SPARSE_SET_H
 
-#include <cassert>
+#include "../vector/vector.hpp"
 
-/* a set (no duplicates) of n unsigned integers from a universe of all unsigned integers in 0 -> N */
-template <unsigned N>
+template <typename T>
 class SparseSet
 {
 public:
-    SparseSet();
+    std::size_t Size() const { return mDense.Size(); }
+    bool Empty() const { return mDense.Emtpy(); }
+    void Clear() { mDense.Clear(), mSparse.Clear(); }
 
-    bool Insert(unsigned n);
-    bool Remove(unsigned n);
-    int Find(unsigned n);
-    void Clear() { mCount = 0; }
+    bool Insert(T t);
+    bool Remove(T t);
+    int Search(T t) const;
 private:
-    unsigned mDense[N + 1];
-    unsigned mSparse[N + 1];
-    unsigned int mCount;
-};  
+    Vector<T> mDense;
+    Vector<T> mSparse;
+};
 
-template <unsigned N>
-SparseSet<N>::SparseSet() : mCount(0) 
+template <typename T>
+bool SparseSet<T>::Insert(T t)
 {
-    for (int i = 0; i < N + 1; i++)
-        mSparse[i] = 0U;
+    if (Find(t) == -1)
+    {
+        if (t >= mSparse.Size())
+            mSparse.Resize(t + 1);
+
+        mDense.InsertLast(t);
+        mSparse[t] = mDense.Size() - 1;
+
+        return true;
+    }
+
+    return false;
 }
 
-template <unsigned N>
-bool SparseSet<N>::Insert(unsigned n)
+template <typename T>
+bool SparseSet<T>::Remove(T t)
 {
-    assert(n <= N);
+    if (Find(t) != -1)
+    {
+        mDense[mSparse[t]] = mDense.Last()
+        //mSparse[mDense.Last()] = mSparse[t];
+        mSparse[mDense[mSparse[t]]] = mSparse[t];
+        mDense.RemoveLast();
 
-    if (Find(n) != -1)
-        return false;   // no duplicates
+        return true;
+    }
 
-    mDense[mCount] = n;
-    mSparse[n] = mCount;
-    mCount++;
-
-    return true;
+    return false;
 }
 
-template <unsigned N>
-bool SparseSet<N>::Remove(unsigned n)
+template <typename T>
+int SparseSet<T>::Search(T t) const
 {
-    assert(n <= N);
-
-    if (mSparse[n] >= mCount || Find(n) == -1)
-        return false;
-
-    mDense[mSparse[n]] = mDense[mCount - 1];
-    mSparse[mDense[mCount - 1]] = mSparse[n];   //mSparse[mDense[mSparse[[n]]] = mSparse[n];
-    mCount--;
-
-    return true;
-}
-
-template <unsigned N>
-int SparseSet<N>::Find(unsigned n)
-{
-    assert(n <= N);
-
-    if (mSparse[n] >= mCount)
+    if (t >= mSparse.Size() || mSparse[t] >= mDense.Size() || mDense[mSparse[t]] != t)
         return -1;
-
-    unsigned int denseIndex = mSparse[n];
-
-    if (mDense[denseIndex] == n)  
-        return denseIndex;
-    
-    return -1;
+    else
+        return t;
 }
 
-#endif // SPARSE_SET
+#endif // SPARSE_SET_H
