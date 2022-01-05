@@ -1,5 +1,5 @@
-//#include "map_erasure.hpp"
-#include "map_parameter.hpp"
+#include "map_erasure.hpp"
+//#include "map_parameter.hpp"
 #include <string>
 #include <iostream>
 

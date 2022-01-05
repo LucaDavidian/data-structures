@@ -5,7 +5,7 @@
 
 #include <cstddef>
 #include <utility>
-#include "../../../../type erasure/type erasure - function/function.hpp"
+#include "../../../../function/function.hpp"
 
 using std::size_t;
 

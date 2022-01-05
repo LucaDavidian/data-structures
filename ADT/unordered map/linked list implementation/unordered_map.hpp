@@ -3,7 +3,7 @@
 #ifndef MAP_H
 #define MAP_H
 
-#include "../../../list/double_ended_doubly_linked_list.hpp"
+#include "../../../linked list/double_ended_doubly_linked_list.hpp"
 #include <exception>
 
 template <typename K, typename V>
@@ -90,7 +90,7 @@ typename Map<K,V>::Iterator Map<K,V>::Remove(const K &key)
     if (it == End())
         throw std::exception();
 
-    return mDataStruct.IT_Remove(it);
+    return mDataStruct.Remove(it);
 }
 
 #endif  // MAP_H

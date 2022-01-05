@@ -5,7 +5,7 @@
 
 #include "../../../vector/vector.hpp"
 #include "../../../linked list/double_ended_doubly_linked_list.hpp"
-#include "../../../../type erasure/type erasure - function/function.hpp"
+#include "../../../../function/function.hpp"
 #include <utility>
 #include <exception>
 #include <cstddef>
