@@ -6,9 +6,9 @@
 #include <cstddef>
 #include <exception>
 
-#include "../../type erasure/type erasure - function/function.hpp"
+#include "../../function/function.hpp"
 #include "../vector/vector.hpp"
-#include "../list/double_ended_doubly_linked_list.hpp"
+#include "../linked list/double_ended_doubly_linked_list.hpp"
 
 using std::size_t;
 
@@ -141,7 +141,7 @@ typename HashTable<T>::Iterator HashTable<T>::Insert(U &&element)
     size_t index = mHashFunction(element, mSize);
 
     BucketArrayIterator bucketArrayIterator = &mBucketArray[index];
-    BucketIterator bucketIterator = bucketArrayIterator->IT_InsertLast(std::forward<U>(element));
+    BucketIterator bucketIterator = bucketArrayIterator->InsertLast(std::forward<U>(element));
 
     mNumElements++;
 
@@ -159,7 +159,7 @@ typename HashTable<T>::Iterator HashTable<T>::Remove(const T &key)
     if (bucketIterator == bucketArrayIterator->End())
         throw ElementNotPresentException();
 
-    bucketIterator = bucketArrayIterator->IT_Remove(bucketIterator);
+    bucketIterator = bucketArrayIterator->Remove(bucketIterator);
 
     mNumElements--;
 
@@ -172,7 +172,7 @@ typename HashTable<T>::Iterator HashTable<T>::Remove(const Iterator &iterator)
     BucketArrayIterator bucketArrayIterator = iterator.mBucketArrayIterator;
     BucketIterator bucketIterator = iterator.mBucketIterator;
 
-    bucketIterator = bucketArrayIterator->IT_Remove(bucketIterator);
+    bucketIterator = bucketArrayIterator->Remove(bucketIterator);
     
     mNumElements--;
 

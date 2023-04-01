@@ -27,7 +27,7 @@ public:
     typedef T *Iterator;             // random access iterator
     typedef const T *ConstIterator;  // implicit conversion from Iterator to ConstIterator
 public:
-    Vector() : mArray(nullptr), mCapacity(0), mNumElements(0) {}
+    Vector() : mArray(nullptr), mCapacity(0U), mNumElements(0U) {}
     Vector(size_t size);
     Vector(const Vector &other);
     template <typename U>
@@ -191,8 +191,10 @@ Vector<T>::Vector(const Vector<U> &other)
 template <typename T>  // "steal" moved from vector resources
 Vector<T>::Vector(Vector &&other) : mArray(other.mArray), mCapacity(other.mCapacity), mNumElements(other.mNumElements)
 {
-    // set moved from array to null
+    // moved-from state is the state of the default constructor
     other.mArray = nullptr;    
+    other.mCapacity = 0U;
+    other.mNumElements = 0U;
 }
 
 template <typename T>
