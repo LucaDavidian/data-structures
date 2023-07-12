@@ -48,7 +48,7 @@ public:
 
     bool Remove(const T &element);
 
-    bool Has(const T &element) { return Find(element) != -1; }
+    bool Has(const T &element) const { return Find(element) != -1; }
 
     const T &Peek() const { if (Empty()) throw HeapEmptyException(); return mHeapArray[0]; }
     
@@ -62,7 +62,7 @@ private:
     size_t GetLeftChildIndex(size_t index) const { return 2 * index + 1; }
     size_t GetRightChildIndex(size_t index) const { return 2 * index + 2; }
 
-    int Find(const T &element); 
+    int Find(const T &element) const; 
 
     void BubbleUpSwap(size_t index);
     void BubbleUpCopy(size_t index);
@@ -163,7 +163,7 @@ bool Heap<T>::Remove(const T &element)
 }
 
 template <typename T>
-int Heap<T>::Find(const T &element)
+int Heap<T>::Find(const T &element) const
 {
     for (size_t i = 0; i < mNumElements; i++)
         if (element == mHeapArray[i])
