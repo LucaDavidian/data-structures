@@ -40,6 +40,7 @@ public:
 
     bool Remove(const T &element);
 
+    bool Has(const T &element) { return Find(element) != -1; }
 
     const T &Peek() const { if (Empty()) throw HeapEmptyException(); return mHeapArray[0]; }
 
@@ -54,7 +55,7 @@ private:
     size_t GetRightChildIndex(size_t index) const { return 2 * index + 2; }
 
     int Find(const T &element);
-    
+
     void BubbleUpSwap(size_t index);
     void BubbleUpCopy(size_t index);
     void TrickleDownSwap(size_t index);

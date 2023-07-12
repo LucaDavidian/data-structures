@@ -48,6 +48,8 @@ public:
 
     bool Remove(const T &element);
 
+    bool Has(const T &element) { return Find(element) != -1; }
+
     const T &Peek() const { if (Empty()) throw HeapEmptyException(); return mHeapArray[0]; }
     
 private:
