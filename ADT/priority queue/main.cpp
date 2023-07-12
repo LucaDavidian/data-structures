@@ -1,7 +1,7 @@
 //#define TYPE_ERASURE_HEAP_QUEUE   // choose heap implementation
-//#define TYPE_PARAM_HEAP_QUEUE
+#define TYPE_PARAM_HEAP_QUEUE
 //#define TYPE_ERASURE_VECTOR_QUEUE
-#define TYPE_PARAM_VECTOR_QUEUE
+//#define TYPE_PARAM_VECTOR_QUEUE
 #include "priority_queue.hpp"
 #include <iostream>
 
@@ -10,7 +10,7 @@
 
 int main(int argc, char **argv)
 {
-    //PriorityQueue<int> pqi([](const int &a, const int &b) { return a > b; });   // type erasure based implementation
+    //PriorityQueue<int> pqi([](const int &a, const int &b) { return a > b; });     // type erasure based implementation
     //PriorityQueue<int, decltype(&Less<int>)> pqi(&Less<int>);                     // template type param based implementation
     PriorityQueue<int> pqi;
 
@@ -21,6 +21,12 @@ int main(int argc, char **argv)
     pqi.Insert(10);
     pqi.Insert(41);
     pqi.Insert(49);
+
+    if (pqi.Find(11))
+        pqi.Remove(11);
+    
+    if (pqi.Find(41))
+        pqi.Remove(41);
 
     size_t size = pqi.Size();
 
