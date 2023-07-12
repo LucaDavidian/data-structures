@@ -9,9 +9,16 @@
 
 using std::size_t;
 
-class HeapEmptyException : public std::exception {};
+class HeapEmptyException : public std::exception 
+{
+public:
+    const char *what() const noexcept override
+    {
+        return "heap empty";
+    }
+};
 
-template <typename T>
+template <typename T>  // min heap by default 
 bool Less(const T &a, const T &b)
 {
     return a < b;
@@ -27,7 +34,9 @@ public:
     ~Heap() { for (size_t i = 0; i < mNumElements; i++) Remove(); operator delete(mHeapArray); }
 
     bool Empty() const { return mNumElements == 0; }
+    
     size_t Size() const { return mNumElements; }
+    
     size_t Capacity() const { return mCapacity; }
 
     void Reserve(size_t size);
@@ -37,11 +46,17 @@ public:
 
     void Remove();
 
+    bool Remove(const T &element);
+
     const T &Peek() const { if (Empty()) throw HeapEmptyException(); return mHeapArray[0]; }
+    
 private:
     T *mHeapArray;
     size_t mCapacity;
     size_t mNumElements;
+    Function<bool(const T&, const T&)> mComparator;
+
+    int Find(const T &element); 
 
     size_t GetParentIndex(size_t index) const { return (index - 1) / 2; }
     size_t GetLeftChildIndex(size_t index) const { return 2 * index + 1; }
@@ -51,8 +66,6 @@ private:
     void BubbleUpCopy(size_t index);
     void TrickleDownSwap(size_t index);
     void TrickleDownCopy(size_t index);
-
-    Function<bool(const T&, const T&)> mComparator;
 };
 
 template <typename T>
@@ -91,11 +104,11 @@ void Heap<T>::Insert(U &&element)
     
     new(&mHeapArray[mNumElements]) T(std::forward<U>(element));
 
-    // bubble up element  
-    //BubbleUpSwap(mNumElements);
-    BubbleUpCopy(mNumElements);
-
     mNumElements++;
+
+    // bubble up element (heapify - restore heap condition)
+    //BubbleUpSwap(mNumElements - 1);
+    BubbleUpCopy(mNumElements - 1);
 }
 
 template <typename T>
@@ -107,19 +120,54 @@ void Heap<T>::Remove()
     if (mNumElements == 0)
     {
         mHeapArray[0].~T();
-        return;
+        
+        mNumElements--;
     }
     else
     {
         mHeapArray[0] = std::move(mHeapArray[mNumElements - 1]);
         mHeapArray[mNumElements - 1].~T();
+
+        mNumElements--;
+
+        // trickle down (heapify - restore heap condition)
+        //TrickleDownSwap(0);
+        TrickleDownCopy(0);
+    }
+}
+
+template <typename T>
+bool Heap<T>::Remove(const T &element)
+{
+    if (int index = Find(element); index != -1)
+    {
+        // old value <= last value (min heap) or old value >= last value (max heap)
+        bool compare = mComparator(mHeapArray[index], mHeapArray[mNumElements - 1]) || !mComparator(mHeapArray[index], mHeapArray[mNumElements - 1]) && !mComparator(mHeapArray[mNumElements - 1], mHeapArray[index]);
+
+        mHeapArray[index] = {std::move(mHeapArray[mNumElements - 1])};
+        mHeapArray[mNumElements - 1].~T();
+
+        mNumElements--;
+
+        if (compare)
+            TrickleDownCopy(index);
+        else
+            BubbleUpCopy(index);
+
+        return true;
     }
 
-    mNumElements--;
-    
-    // trickle down
-    //TrickleDownSwap(0);
-    TrickleDownCopy(0);
+    return false;
+}
+
+template <typename T>
+int Heap<T>::Find(const T &element)
+{
+    for (size_t i = 0; i < mNumElements; i++)
+        if (element == mHeapArray[i])
+            return static_cast<int>(i);
+
+    return -1;
 }
 
 template <typename T>
@@ -130,7 +178,7 @@ void Heap<T>::BubbleUpSwap(size_t index)
     {
         size_t parentIndex = GetParentIndex(index);
 
-        // parent <= child
+        // parent <= child (min heap) or parent >= child (max heap)
         if (mComparator(mHeapArray[parentIndex], mHeapArray[index]) || !mComparator(mHeapArray[parentIndex], mHeapArray[index]) && !mComparator(mHeapArray[index], mHeapArray[parentIndex]))
             return;
             
@@ -157,7 +205,7 @@ void Heap<T>::BubbleUpCopy(size_t index)
     {
         size_t parentIndex = GetParentIndex(index);
 
-        // parent <= child
+        // parent <= child (min heap) or parent >= child (max heap)
         if (mComparator(mHeapArray[parentIndex], temp) || !mComparator(mHeapArray[parentIndex], temp) && !mComparator(temp, mHeapArray[parentIndex]))
             break;
 
@@ -167,6 +215,7 @@ void Heap<T>::BubbleUpCopy(size_t index)
         index = parentIndex;
     }
 
+    // fill the hole
     mHeapArray[index] = std::move(temp);
 }
 
@@ -174,7 +223,7 @@ template <typename T>
 void Heap<T>::TrickleDownSwap(size_t index)
 {
     // move the element down
-    while (GetLeftChildIndex(index) < mNumElements)
+    while (GetLeftChildIndex(index) < mNumElements)  // node has at least left child
     {
         size_t leftChildIndex = GetLeftChildIndex(index);
         size_t rightChildIndex = GetRightChildIndex(index);
@@ -183,12 +232,12 @@ void Heap<T>::TrickleDownSwap(size_t index)
         
         if (rightChildIndex >= mNumElements)
             childIndex = leftChildIndex;
-        else if (mComparator(mHeapArray[rightChildIndex], mHeapArray[leftChildIndex]))  // right child < left child
+        else if (mComparator(mHeapArray[rightChildIndex], mHeapArray[leftChildIndex]))  // right child < left child (min heap) or right child > left child (max heap)
             childIndex = rightChildIndex;
         else    
             childIndex = leftChildIndex;
 
-        // parent <= child
+        // parent <= child (min heap) or parent >= child (max heap)
         if (mComparator(mHeapArray[index], mHeapArray[childIndex]) || !mComparator(mHeapArray[index], mHeapArray[childIndex]) && !mComparator(mHeapArray[childIndex], mHeapArray[index]))
             return;
 
@@ -197,8 +246,8 @@ void Heap<T>::TrickleDownSwap(size_t index)
         mHeapArray[index] = std::move(mHeapArray[childIndex]);
         mHeapArray[childIndex] = std::move(temp);
 
-        //using std::swap
-        //swap(mHeapArray[parentIndex], mHeapArray[childIndex]);
+        // using std::swap;
+        // swap(mHeapArray[index], mHeapArray[childIndex]);
 
         index = childIndex;
     }
@@ -225,7 +274,7 @@ void Heap<T>::TrickleDownCopy(size_t index)
         else    
             childIndex = leftChildIndex;
 
-        // parent <= child
+        // parent <= child (min heap) or parent >= child (max heap)
         if (mComparator(temp, mHeapArray[childIndex]) || !mComparator(temp, mHeapArray[childIndex]) && !mComparator(mHeapArray[childIndex], temp))
             break;
 
@@ -235,6 +284,7 @@ void Heap<T>::TrickleDownCopy(size_t index)
         index = childIndex;
     }
 
+    // fill the hole
     mHeapArray[index] = std::move(temp);
 }
 

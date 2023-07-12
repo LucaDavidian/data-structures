@@ -4,7 +4,7 @@
 #define PRINT(s)     std::cout << (s)
 #define PRINTLN(s)   PRINT(s) << std::endl
 
-#define TYPE_ERASURE
+//#define TYPE_ERASURE
 
 #if defined TYPE_ERASURE  // heap class implementation uses type erasure for comparator 
 
@@ -78,6 +78,9 @@
         hi.Insert(55);
         hi.Insert(40);
         hi.Insert(23);
+
+        hi.Remove(55);
+        hi.Remove(1);
 
         size_t size = hi.Size();
 
