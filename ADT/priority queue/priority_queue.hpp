@@ -10,8 +10,7 @@
     class PriorityQueue
     {
     public:
-        PriorityQueue() = default;
-        PriorityQueue(const Function<bool(const T&, const T&)> &comparator) : mHeap(comparator) {}
+        PriorityQueue(const Function<bool(const T&, const T&)> &comparator = Less<T>) : mHeap(comparator) {}
 
         bool Empty() const { return mHeap.Empty(); }
         size_t Size() const { return mHeap.Size(); }
@@ -20,6 +19,10 @@
         void Insert(U &&element)  { mHeap.Insert(std::forward<U>(element)); }
 
         void Remove() { mHeap.Remove(); }
+
+        void Remove(const T &element) { mHeap.Remove(element); }
+
+        bool Find(T const &element) const { return mHeap.has(element); }
 
         const T &Peek() const { return mHeap.Peek(); }
     private:
@@ -34,8 +37,7 @@
     class PriorityQueue
     {
     public:
-        PriorityQueue() = default;
-        PriorityQueue(const F &comparator) : mHeap(comparator) {}
+        PriorityQueue(const F &comparator = Less<T>) : mHeap(comparator) {}
 
         bool Empty() const { return mHeap.Empty(); }
         size_t Size() const { return mHeap.Size(); }
@@ -45,9 +47,13 @@
 
         void Remove() { mHeap.Remove(); }
 
+        void Remove(const T &element) { mHeap.Remove(element); }
+
+        bool Find(const T &element) const { return mHeap.Has(element); }
+
         const T &Peek() const { return mHeap.Peek(); }
     private:
-        Heap<T,F> mHeap;
+        Heap<T, F> mHeap;
     };
 
 #elif defined TYPE_ERASURE_VECTOR_QUEUE   // sorted vector implementation (type erased comparator)
@@ -55,7 +61,7 @@
     #include "../../vector/vector.hpp"
     #include "../../../function/function.hpp"
 
-    template <typename T>
+    template <typename T>  // ascendent order by default (last element is head of queue)
     bool Less(const T &a, const T &b)
     {
         return a < b;
@@ -75,6 +81,10 @@
 
         void Remove() { mVector.RemoveLast(); }
 
+        void Remove(const T &element) { mVector.Remove(mVector.Find(element)); }
+
+        bool Find(const T &element) const { return mVector.Find(element) != mVector.End(); }
+
         const T &Peek() const { return mVector.Last(); }
     private:
         Vector<T> mVector;
@@ -85,16 +95,6 @@
     template <typename U>
     void PriorityQueue<T>::Insert(U &&element)
     {
-        // typename Vector<T>::Iterator it = mVector.Begin();
-
-        // while (it != mVector.End())            // if element < *it iterate
-        //     if (mComparator(element, *it))       
-        //         ++it;
-        //     else    
-        //         break;
-
-        // mVector.IT_Insert(it, std::forward<U>(element));
-
         if (Empty())
             mVector.Insert(0, std::forward<U>(element));
         else
@@ -116,7 +116,7 @@
 
     #include "../../vector/vector.hpp"
 
-    template <typename T>
+    template <typename T>  // ascendent order by default (last element is head of queue)
     bool Less(const T &a, const T &b)
     {
         return a < b;
@@ -136,6 +136,10 @@
 
         void Remove() { mVector.RemoveLast(); }
 
+        void Remove(const T &element) { mVector.Remove(mVector.Find(element)); }
+
+        bool Find(const T &element) const { return mVector.Find(element) != mVector.End(); }
+
         const T &Peek() const { return mVector.Last(); }
     private:
         Vector<T> mVector;
@@ -146,16 +150,6 @@
     template <typename U>
     void PriorityQueue<T,F>::Insert(U &&element)
     {
-        // typename Vector<T>::Iterator it = mVector.Begin();
-
-        // while (it != mVector.End())            // if element < *it iterate
-        //     if (mComparator(element, *it))       
-        //         ++it;
-        //     else    
-        //         break;
-
-        // mVector.IT_Insert(it, std::forward<U>(element));
-
         if (Empty())
             mVector.Insert(0, std::forward<U>(element));
         else
