@@ -56,11 +56,11 @@ private:
     size_t mNumElements;
     Function<bool(const T&, const T&)> mComparator;
 
-    int Find(const T &element); 
-
     size_t GetParentIndex(size_t index) const { return (index - 1) / 2; }
     size_t GetLeftChildIndex(size_t index) const { return 2 * index + 1; }
     size_t GetRightChildIndex(size_t index) const { return 2 * index + 2; }
+
+    int Find(const T &element); 
 
     void BubbleUpSwap(size_t index);
     void BubbleUpCopy(size_t index);
