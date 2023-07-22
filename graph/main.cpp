@@ -1,6 +1,6 @@
-//#include "graph_edge_list.hpp"
+#include "graph_edge_list.hpp"
 //#include "graph_adjacency_matrix.hpp"
-#include "graph_adjacency_list.hpp"
+//#include "graph_adjacency_list.hpp"
 #include <iostream>
 #include <string>
 #include <cmath>
@@ -48,14 +48,14 @@ int main(int argc, char **argv)
     gi.AddNode("F");
     gi.AddNode("G");
 
-    gi.AddEdge(0, 1);
-    gi.AddEdge(0, 2);
-    gi.AddEdge(0, 3);
-    gi.AddEdge(0, 4);   
-    gi.AddEdge(1, 4);
-    gi.AddEdge(1, 5);
-    gi.AddEdge(3, 6);   
-    gi.AddEdge(4, 6);   
+    gi.AddEdge(0, 1, 1.0f, true);
+    gi.AddEdge(0, 2, 1.0f, true);
+    gi.AddEdge(0, 3, 1.0f, true);
+    gi.AddEdge(0, 4, 1.0f, true);   
+    gi.AddEdge(1, 4, 1.0f, true);
+    gi.AddEdge(1, 5, 1.0f, true);
+    gi.AddEdge(3, 6, 1.0f, true);   
+    gi.AddEdge(4, 6, 2.0f, true);   
 
     std::cout << "breadth first search: " << '\n';   
 
@@ -128,7 +128,7 @@ int main(int argc, char **argv)
     gv.AddEdge(5, 2, 0.2f, true);
 
     std::cout << "Dijkstra shortest path from 0,0 to 2,0" << '\n';
-    Vector<Graph<Vector2D>::Node const *> shortestPath2 = gv.DijkstraShortestPath(0, 2);
+    Graph<Vector2D>::Path shortestPath2 = gv.DijkstraShortestPath(0, 2);
 
     for (auto node : shortestPath2)
         std::cout << node->data << " ";

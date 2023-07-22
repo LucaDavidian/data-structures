@@ -1,42 +1,72 @@
 #include "../vector/vector.hpp"
 #include <limits>
 
-template <typename T>
+template <typename T, typename Heuristic>
+class Graph;
+
+// euclidean distance (underestimating)
+class EuclideanHeuristic
+{
+public:
+    template <typename T, typename Heuristic>
+    float operator()(Graph<T, Heuristic> const *graph, unsigned int nodeIndex, unsigned int endNodeIndex) const
+    {
+        T diff = graph->mNodes[nodeIndex].data - graph->mNodes[endNodeIndex].data;
+        return diff.Length() * 0.01f;
+    }
+};
+
+template <typename T, typename Heuristic = EuclideanHeuristic>
 class Graph
 {
+friend Heuristic;
+
 public:
     struct Node
     {
         T data;
-        mutable bool visited = false;
+        mutable bool visited;
         mutable float distance;
         mutable int parentNodeIndex;
+        mutable float heuristic;
     };
+
+public:
+    using Path = Vector<Graph::Node const *>;
+
 public:
     void AddNode(const T &data);
+
     void AddEdge(unsigned int nodeIndex1, unsigned int nodeIndex2, float weight = 1.0f, bool directed = false);
 
     int GetUnvisitedAdjacentNodeIndex(unsigned int nodeIndex) const;
 
     template <typename F>
     void BreadthFirstSearch(unsigned int startNodeIndex, const F &f) const;
+
     template <typename F>
     void DepthFirstSearch(unsigned int startNodeIndex, const F &f) const;
+
     template <typename F>
     void DepthFirstSearchRecursive(unsigned int nodeIndex, const F&f);
 
-    Vector<Vector<const Node*>> DijkstraShortestPath(unsigned int startNodeIndex) const;
+    Vector<Path> DijkstraShortestPath(unsigned int startNodeIndex) const;
+    
+    Path DijkstraShortestPath(unsigned int startNodeIndex, unsigned int endNodeIndex) const; 
+
+    Path AStar(unsigned int startNodeIndex, unsigned int endNodeIndex) const;
+
 private:
     static const float INF;
     Vector<Node> mNodes;
     Vector<Vector<float>> mAdjacencyMatrix;
 };
 
-template <typename T>
-const float Graph<T>::INF = std::numeric_limits<float>::max();
+template <typename T, typename Heuristic>
+const float Graph<T, Heuristic>::INF = std::numeric_limits<float>::max();
 
-template <typename T>
-void Graph<T>::AddNode(const T &data)
+template <typename T, typename Heuristic>
+void Graph<T, Heuristic>::AddNode(const T &data)
 {
     mNodes.InsertLast(Node{data});
 
@@ -46,17 +76,20 @@ void Graph<T>::AddNode(const T &data)
         vector.Resize(mAdjacencyMatrix.Size(), INF);
 }
 
-template <typename T>
-void Graph<T>::AddEdge(unsigned int nodeIndex1, unsigned int nodeIndex2, float weight, bool directed)
+template <typename T, typename Heuristic>
+void Graph<T, Heuristic>::AddEdge(unsigned int nodeIndex1, unsigned int nodeIndex2, float weight, bool directed)
 {
-    mAdjacencyMatrix[nodeIndex1][nodeIndex2] = weight;
+    if (nodeIndex1 < mNodes.Size() && nodeIndex2 < mNodes.Size())
+    {
+        mAdjacencyMatrix[nodeIndex1][nodeIndex2] = weight;
 
-    if (!directed)
-        mAdjacencyMatrix[nodeIndex2][nodeIndex1] = weight;
+        if (!directed)
+            mAdjacencyMatrix[nodeIndex2][nodeIndex1] = weight;
+    }
 }
 
-template <typename T>
-int Graph<T>::GetUnvisitedAdjacentNodeIndex(unsigned int nodeIndex) const
+template <typename T, typename Heuristic>
+int Graph<T, Heuristic>::GetUnvisitedAdjacentNodeIndex(unsigned int nodeIndex) const
 {
     for (unsigned int i = 0; i < mAdjacencyMatrix[nodeIndex].Size(); i++)
         if (mAdjacencyMatrix[nodeIndex][i] != INF && !mNodes[i].visited)
@@ -67,9 +100,9 @@ int Graph<T>::GetUnvisitedAdjacentNodeIndex(unsigned int nodeIndex) const
 
 #include "../ADT/queue/queue.hpp"
 
-template <typename T>
+template <typename T, typename Heuristic>
 template <class F>
-void Graph<T>::BreadthFirstSearch(unsigned int startNodeIndex, const F &f) const
+void Graph<T, Heuristic>::BreadthFirstSearch(unsigned int startNodeIndex, const F &f) const
 {
     Queue<unsigned int> nodeQueue;
 
@@ -98,9 +131,9 @@ void Graph<T>::BreadthFirstSearch(unsigned int startNodeIndex, const F &f) const
 
 #include "../ADT/stack/stack.hpp"
 
-template <typename T>
+template <typename T, typename Heuristic>
 template <class F>
-void Graph<T>::DepthFirstSearch(unsigned int startNodeIndex, const F &f) const
+void Graph<T, Heuristic>::DepthFirstSearch(unsigned int startNodeIndex, const F &f) const
 {
     Stack<unsigned int> nodeStack;
 
@@ -127,9 +160,9 @@ void Graph<T>::DepthFirstSearch(unsigned int startNodeIndex, const F &f) const
         node.visited = false;
 }
 
-template <typename T>
+template <typename T, typename Heuristic>
 template <typename F>
-void Graph<T>::DepthFirstSearchRecursive(unsigned int nodeIndex, const F&f)
+void Graph<T, Heuristic>::DepthFirstSearchRecursive(unsigned int nodeIndex, const F&f)
 {
     static unsigned int level = 0U;
 
@@ -149,11 +182,11 @@ void Graph<T>::DepthFirstSearchRecursive(unsigned int nodeIndex, const F&f)
             node.visited = false;
 }
 
-#define TYPE_ERASURE_HEAP_QUEUE
+#define TYPE_PARAM_HEAP_QUEUE
 #include "../ADT/priority queue/priority_queue.hpp"
 
-template <typename T>
-Vector<Vector<const typename Graph<T>::Node*>> Graph<T>::DijkstraShortestPath(unsigned int startNodeIndex) const
+template <typename T, typename Heuristic>
+Vector<typename Graph<T, Heuristic>::Path> Graph<T, Heuristic>::DijkstraShortestPath(unsigned int startNodeIndex) const
 {
     for (unsigned int i = 0; i < mNodes.Size(); i++)
     {
@@ -163,16 +196,15 @@ Vector<Vector<const typename Graph<T>::Node*>> Graph<T>::DijkstraShortestPath(un
     }
 
     auto comparator = [this](unsigned int v1, unsigned int v2) -> bool { return this->mNodes[v1].distance < this->mNodes[v2].distance; };
-    PriorityQueue<unsigned int> nodePriorityQueue(comparator);
+    PriorityQueue<unsigned int, decltype(comparator)> nodePriorityQueue(comparator);
 
-    nodePriorityQueue.Insert(startNodeIndex);                                // insert start node into priority queue
+    nodePriorityQueue.Insert(startNodeIndex);                                // insert start node index into priority queue
 
     while (!nodePriorityQueue.Empty())
     {
-        unsigned int currentNodeIndex;
-        while (mNodes[currentNodeIndex = nodePriorityQueue.Peek()].visited)  // get first node in priority queue
-            nodePriorityQueue.Remove();                                      // if node has been already visited remove node (duplicate)
+        unsigned int currentNodeIndex = nodePriorityQueue.Peek();            // get first node in priority queue
 
+        nodePriorityQueue.Remove();                                          // remove node from priority queue
         mNodes[currentNodeIndex].visited = true;                             // mark node as visited
 
         for (unsigned int i = 0; i < mNodes.Size(); i++)                     // find all unvisited adjacent nodes
@@ -183,17 +215,18 @@ Vector<Vector<const typename Graph<T>::Node*>> Graph<T>::DijkstraShortestPath(un
 
                 if (newDistance < currentDistance)                           // if distance is shorter relax edge 
                 {
+                    if (nodePriorityQueue.Find(i))
+                        nodePriorityQueue.Remove(i);
+
                     mNodes[i].distance = newDistance;
                     mNodes[i].parentNodeIndex = currentNodeIndex;
                 
-                    nodePriorityQueue.Insert(i);                             // insert node into queue (duplicates)
+                    nodePriorityQueue.Insert(i);                             // insert node into queue
                 }
             }
-
-        nodePriorityQueue.Remove();                                          // remove node from priority queue
     }
 
-    Vector<Vector<typename Graph<T>::Node const*>> paths;
+    Vector<Path> paths;
     paths.Resize(mNodes.Size());
 
     for (unsigned int i = 0; i < mNodes.Size(); i++)
@@ -215,5 +248,135 @@ Vector<Vector<const typename Graph<T>::Node*>> Graph<T>::DijkstraShortestPath(un
     }
     
     return paths;
+}
+
+template <typename T, typename Heuristic>
+typename Graph<T, Heuristic>::Path Graph<T, Heuristic>::DijkstraShortestPath(unsigned int startNodeIndex, unsigned int endNodeIndex) const
+{
+    for (const Node &node : mNodes)
+    {
+        node.visited = false;
+        node.distance = INF;
+        node.parentNodeIndex = -1;
+    }
+    mNodes[startNodeIndex].distance = 0.0f;
+
+    auto const &comparator = [this] (unsigned int nodeIndex1, unsigned int nodeIndex2) { return mNodes[nodeIndex1].distance < mNodes[nodeIndex2].distance;};
+    PriorityQueue<unsigned int, decltype(comparator)> nodePriorityQueue(comparator);
+
+    nodePriorityQueue.Insert(startNodeIndex);
+
+    while (!nodePriorityQueue.Empty())
+    {
+        unsigned int currentNodeIndex = nodePriorityQueue.Peek();
+
+        if (currentNodeIndex == endNodeIndex)   // stop algorithm if end node is found
+            break;
+
+        nodePriorityQueue.Remove();
+        mNodes[currentNodeIndex].visited = true;
+
+        for (unsigned int i = 0; i < mNodes.Size(); i++) 
+        {
+            if (i == currentNodeIndex || mAdjacencyMatrix[currentNodeIndex][i] == INF || mNodes[i].visited)
+                continue;
+            
+            unsigned int unvisitedAdjacentNodeIndex = i;
+            
+            float currentDistance = mNodes[unvisitedAdjacentNodeIndex].distance;
+            float newDistance = mNodes[currentNodeIndex].distance + mAdjacencyMatrix[currentNodeIndex][unvisitedAdjacentNodeIndex];
+            
+            if (newDistance < currentDistance)
+            {
+                if (nodePriorityQueue.Find(unvisitedAdjacentNodeIndex))
+                    nodePriorityQueue.Remove(unvisitedAdjacentNodeIndex);
+                    
+                mNodes[unvisitedAdjacentNodeIndex].distance = newDistance;
+                mNodes[unvisitedAdjacentNodeIndex].parentNodeIndex = currentNodeIndex;
+
+                nodePriorityQueue.Insert(unvisitedAdjacentNodeIndex);
+            }
+        }       
+    }
+
+    // create shortest path
+    Path path;
+
+    unsigned int nodeIndex = endNodeIndex;
+    while (nodeIndex != startNodeIndex)
+    {
+        path.InsertFirst(&mNodes[nodeIndex]);
+        nodeIndex = mNodes[nodeIndex].parentNodeIndex;
+    }
+
+    path.InsertFirst(&mNodes[startNodeIndex]);
+
+    return path;
+}
+
+template <typename T, typename Heuristic>
+typename Graph<T, Heuristic>::Path Graph<T, Heuristic>::AStar(unsigned int startNodeIndex, unsigned int endNodeIndex) const
+{
+    for (Node const &node : mNodes)
+    {
+        node.visited = false;
+        node.distance = INF;
+        node.parentNodeIndex = -1;
+        node.heuristic = 0.0f;
+    }
+    mNodes[startNodeIndex].distance = 0.0f;
+
+    auto comparator = [this](unsigned int nodeIndex1, unsigned int nodeIndex2) -> bool { return mNodes[nodeIndex1].distance + mNodes[nodeIndex1].heuristic < mNodes[nodeIndex2].distance + mNodes[nodeIndex2].heuristic; };
+    PriorityQueue<unsigned int, decltype(comparator)> nodePriorityQueue(comparator);
+
+    nodePriorityQueue.Insert(startNodeIndex);
+
+    while (!nodePriorityQueue.Empty())
+    {
+        unsigned int currentNodeIndex = nodePriorityQueue.Peek();
+
+        if (currentNodeIndex == endNodeIndex)   // stop algorithm if end node is found
+            break;
+
+        nodePriorityQueue.Remove();
+        mNodes[currentNodeIndex].visited = true;
+
+        for (unsigned int i = 0; i < mNodes.Size(); i++) 
+        {
+            if (i == currentNodeIndex || mAdjacencyMatrix[currentNodeIndex][i] == INF)
+                continue;
+            
+            unsigned int adjacentNodeIndex = i;
+
+            float currentDistance = mNodes[adjacentNodeIndex].distance;
+            float newDistance = mNodes[currentNodeIndex].distance + mAdjacencyMatrix[currentNodeIndex][adjacentNodeIndex];
+
+            if (newDistance < currentDistance)
+            {
+                if (nodePriorityQueue.Find(adjacentNodeIndex))
+                    nodePriorityQueue.Remove(adjacentNodeIndex);
+
+                mNodes[adjacentNodeIndex].distance = newDistance;
+                mNodes[adjacentNodeIndex].parentNodeIndex = currentNodeIndex;
+
+                mNodes[adjacentNodeIndex].heuristic = Heuristic()(this, adjacentNodeIndex, endNodeIndex);  // calculate node's heuristic 
+
+                nodePriorityQueue.Insert(adjacentNodeIndex);                                   // insert into priority queue
+            }
+        }
+    }
+
+    Path path;
+
+    unsigned int nodeIndex = endNodeIndex;
+    while (nodeIndex != startNodeIndex)
+    {
+        path.InsertFirst(&mNodes[nodeIndex]);
+        nodeIndex = mNodes[nodeIndex].parentNodeIndex;
+    }
+
+    path.InsertFirst(&mNodes[startNodeIndex]);
+
+    return path;
 }
 
