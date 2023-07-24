@@ -50,10 +50,10 @@ public:
     int GetUnvisitedAdjacentNodeIndex(unsigned int nodeIndex) const;
 
     template <typename F>
-    void BreadthFirstSearch(unsigned int startNodeIndex, const F&f);
+    void BreadthFirstSearch(unsigned int startNodeIndex, const F &f);
     
     template <typename F>
-    void DepthFirstSearch(unsigned int startNodeIndex, const F&f);
+    void DepthFirstSearch(unsigned int startNodeIndex, const F &f);
     
     template <typename F>
     void DepthFirstSearchRecursive(unsigned int nodeIndex, const F&f);

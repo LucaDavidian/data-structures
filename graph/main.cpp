@@ -1,6 +1,7 @@
-#include "graph_edge_list.hpp"
+//#include "graph_edge_list.hpp"
 //#include "graph_adjacency_matrix.hpp"
 //#include "graph_adjacency_list.hpp"
+#include "graph_adjacency_list2.hpp"
 #include <iostream>
 #include <string>
 #include <cmath>
@@ -128,7 +129,7 @@ int main(int argc, char **argv)
     gv.AddEdge(5, 2, 0.2f, true);
 
     std::cout << "Dijkstra shortest path from 0,0 to 2,0" << '\n';
-    Graph<Vector2D>::Path shortestPath2 = gv.DijkstraShortestPath(0, 2);
+    auto shortestPath2 = gv.DijkstraShortestPath(0, 2);
 
     for (auto node : shortestPath2)
         std::cout << node->data << " ";
