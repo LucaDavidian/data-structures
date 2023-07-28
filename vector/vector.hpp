@@ -210,7 +210,7 @@ Vector<T>::Vector(Vector<U> &&other)
 
     // set array, capacity and element count
     mArray = static_cast<T*>(rawMemory);
-    mCapacity = other.Capacity;
+    mCapacity = other.mCapacity;
     mNumElements = other.mNumElements;
 
     // set moved from array to null
